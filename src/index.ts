@@ -8,6 +8,7 @@ import * as bodyParser from 'body-parser'
 import { ConnectionHandler, ConnectionParameters } from './connectionHandler'
 import { AMT, IPS, CIM } from '@open-amt-cloud-toolkit/wsman-messages'
 import { BodyObj, ClassMetaData } from './common'
+import { connect } from 'node:http2'
 const app = express()
 const port = 3000
 let connection
@@ -20,6 +21,14 @@ app.get('/index.htm', function (req, res) {
 
 app.get('/classes', function (req, res) {
   res.send(ClassMetaData)
+})
+
+app.get('/connectionStatus', function (req, res) {
+  if (connection == null) {
+    res.send(false)
+  } else {
+    res.send(connection.status)
+  }
 })
 
 app.post('/wsman', function (req, res) {
@@ -49,9 +58,15 @@ app.post('/wsman', function (req, res) {
   }
 })
 
-app.post('/', function (req, res) {
+app.post('/connect', function (req, res) {
   const request: ConnectionParameters = req.body
+  console.log(request)
   connection = new ConnectionHandler(request.address, request.port, request.username, request.password)
+  connection.connect()
+})
+
+app.post('/submit', function (req, res) {
+  
 })
 
 app.listen(port, () => {
@@ -98,135 +113,4 @@ app.listen(port, () => {
 //   // Return Response to Webpage
 // }
 
-// function handleAuth(message) {
-//   const found = message.headers.find(item => item.name.toLowerCase() === 'www-authenticate')
-//   if (found != null) {
-//     return httpHandler.parseAuthenticateResponseHeader(found.value)
-//   }
-//   return null
-// }
-
-// // export interface DigestChallenge {
-// //   realm?: string
-// //   nonce?: string // Uniquely generated everytime a 401 response made
-// //   stale?: string
-// //   qop?: string // quality of protection
-// // }
-
-// // export interface connectionParams {
-// //   port: number
-// //   guid: string
-// //   username: string
-// //   password: string
-// //   nonce?: string
-// //   nonceCounter?: number
-// //   consoleNonce?: string
-// //   digestChallenge?: DigestChallenge
-// // }
-
-// class HttpHandler {
-//   authResolve = null
-//   isAuthInProgress = null
-//   // The purpose of this directive is to allow the server to detect request replays by maintaining its own copy of this count.
-//   // if the same nonceCounter-value is seen twice, then the request is a replay
-//   nonceCounter = 1
-//   stripPrefix = null
-//   parser = null
-//   constructor() {
-//     this.stripPrefix = xml2js.processors.stripPrefix
-//     this.parser = new xml2js.Parser({ ignoreAttrs: false, mergeAttrs: false, explicitArray: false, tagNameProcessors: [this.stripPrefix], valueProcessors: [xml2js.processors.parseNumbers, xml2js.processors.parseBooleans] })
-//   }
-
-//   wrapIt = (data, connectionParams) => {
-//     try {
-//       const url = '/wsman'
-//       const action = 'POST'
-//       let message = `${action} ${url} HTTP/1.1\r\n`
-//       if (data == null) {
-//         return null
-//       }
-//       if (connectionParams.digestChallenge != null) {
-//         // Prepare an Authorization request header from the 401 unauthorized response from AMT
-//         let responseDigest = null
-//         // console nonce should be a unique opaque quoted string
-//         connectionParams.consoleNonce = Math.random().toString(36).substring(7)
-//         const nc = ('00000000' + (this.nonceCounter++).toString(16)).slice(-8)
-//         const HA1 = this.hashIt(`${connectionParams.username}:${connectionParams.digestChallenge.realm}:${connectionParams.password}`)
-//         const HA2 = this.hashIt(`${action}:${url}`)
-//         responseDigest = this.hashIt(`${HA1}:${connectionParams.digestChallenge.nonce}:${nc}:${connectionParams.consoleNonce}:${connectionParams.digestChallenge.qop}:${HA2}`)
-//         const authorizationRequestHeader = this.digestIt({
-//           username: connectionParams.username,
-//           realm: connectionParams.digestChallenge.realm,
-//           nonce: connectionParams.digestChallenge.nonce,
-//           uri: url,
-//           qop: connectionParams.digestChallenge.qop,
-//           response: responseDigest,
-//           nc,
-//           cnonce: connectionParams.consoleNonce
-//         })
-//         message += `Authorization: ${authorizationRequestHeader}\r\n`
-//       }
-
-//       message += Buffer.from([
-//         `Host: ${connectionParams.host}:${connectionParams.port}`,
-//         'Transfer-Encoding: chunked',
-//         '',
-//         data.length.toString(16).toUpperCase(),
-//         data,
-//         0,
-//         '\r\n'
-//       ].join('\r\n'), 'utf8')
-//       return message
-//     } catch (err) {
-//       console.log('This is busted')
-//     }
-//   }
-
-//   hashIt = (data) => {
-//     return crypto.createHash('md5').update(data).digest('hex')
-//   }
-
-//   // Prepares Authorization Request Header
-//   digestIt = (params) => {
-//     const paramNames = []
-//     for (const i in params) {
-//       paramNames.push(i)
-//     }
-//     return `Digest ${paramNames.reduce((s1, ii) => `${s1},${ii}="${params[ii]}"`, '').substring(1)}`
-//   }
-
-//   parseAuthenticateResponseHeader = (value) => {
-//     const params = value.replace('Digest realm', 'realm').split(/([^=,]*)=("[^"]*"|[^,"]*)/)
-//     const obj = {}
-//     for (let idx = 0; idx < params.length; idx = idx + 3) {
-//       if (params[idx + 1] != null) {
-//         obj[params[idx + 1].trim()] = params[idx + 2].replace(/"/g, '')
-//       }
-//     }
-//     if (obj.qop != null) {
-//       obj.qop = 'auth'
-//     }
-//     return obj
-//   }
-
-//   addAuthorizationHeader = (context) => {
-//     const { message } = context
-//     const found = message.headers?.find(item => item.name === 'Www-Authenticate')
-//     if (found != null) {
-//       return httpHandler.parseAuthenticateResponseHeader(found.value)
-//     }
-//   }
-
-//   parseXML = (xmlBody) => {
-//     let wsmanResponse
-//     this.parser.parseString(xmlBody, (err, result) => {
-//       if (err) {
-//         console.log('failed to parse XML :', err)
-//         wsmanResponse = null
-//       } else {
-//         wsmanResponse = result
-//       }
-//     })
-//     return wsmanResponse
-//   }
-// }
+// 

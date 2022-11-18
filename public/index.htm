@@ -63,6 +63,7 @@
 
     form {
       display: table;
+      border-collapse: collapse;
     }
 
     p {
@@ -112,19 +113,26 @@
   let globalAPICalls
   let currentAPI
   let currentMethod
+  let connectionStatus = false
   const ServerPost = 'http://localhost:3000/'
 
   function pageLoad() {
     getClasses()
+    getConnectionStatus()
   }
 
-  function loadAPICallList(apiCalls) {
-    globalAPICalls = apiCalls
+  function getConnectionStatus(callback) {
+    httpRequest('GET', 'connectionStatus', '', callback)
+  }
+
+  function loadAPICallList(apiCalls, callback) {
+    globalAPICalls = JSON.parse(apiCalls)
     let apiCallList = document.getElementById('apiCallList')
     apiCallList.options[apiCallList.options.length] = new Option('Select API Call', 'default', true, true)
     for (let item in globalAPICalls) {
       apiCallList.options[apiCallList.options.length] = new Option(item, item)
     }
+    if (callback) { callback() }
   }
 
   function loadMethodCalls(apiCall) {
@@ -139,7 +147,7 @@
     })
   }
 
-  
+
   function apiCallChange(selectedValue) {
     currentAPI = selectedValue.value
     if (currentAPI === 'default') { return }
@@ -160,34 +168,96 @@
     httpRequest('GET', 'classes', '')
   }
 
-  function httpRequest(method, route, message) {
+  function httpRequest(method, route, message, callback) {
     const xhr = new XMLHttpRequest()
     xhr.open(method, ServerPost + route)
     xhr.setRequestHeader('Content-type', 'application/json')
-    xhr.onreadystatechange = function() {
+    xhr.onreadystatechange = function () {
       if (xhr.readyState === 4 && xhr.status === 200) {
-        processHttpResponse(xhr.response, route)
+        processHttpResponse(xhr.response, route, callback)
       }
     }
+    console.log('sending: ' + message)
     xhr.send(JSON.stringify(message))
   }
 
-  function processHttpResponse(response, route) {
+  function processHttpResponse(response, route, callback) {
     switch (route) {
+      case 'connectionStatus':
+        connectionStatusResponse(response, callback)
+        break
       case 'classes':
-        loadAPICallList(JSON.parse(response))
+        loadAPICallList(response, callback)
         break
       case 'wsman':
-        populateXMLTransmit(response)
+        populateXMLTransmit(response, callback)
+        break
+      case 'submit':
+        handleAMTResponse(response, callback)
+        break
+      case 'connect':
+        connectResponse(response, callback)
+        break
+      case 'disconnect':
+        disconnectResponse(response, callback)
         break
       default:
         console.error('unknown route')
     }
   }
 
-  function populateXMLTransmit(xmlMessage) {
+  function populateXMLTransmit(xmlMessage, callback) {
     let tbXMLTransmit = document.getElementById('tbXMLTransmit')
     tbXMLTransmit.value = xmlMessage
+    if (callback) { callback() }
+  }
+
+  function handleAMTResponse(response, callback) {
+    if (callback) { callback() }
+  }
+
+  function connectionStatusResponse(response, callback) {
+    connectionStatus = response
+    if (callback) { callback() }
+  }
+
+  function toggleConnection() {
+    console.log('toggleConnection request')
+    httpRequest('POST', 'connect', {
+      address: document.getElementsByName('host')[0].value,
+      port: document.getElementsByName('port')[0].value,
+      username: document.getElementsByName('username')[0].value,
+      password: document.getElementsByName('password')[0].value
+    })
+  }
+
+  function connectResponse(response, callback) {
+    if (response === true) {
+
+      let connectButton = getElementById('connect')
+      connectButton.innerHTML = 'Disconnect'
+      connectButton.onclick = 'disconnect()'
+    }
+    if (callback) { callback() }
+  }
+
+  function disconnect() {
+    httpRequest('POST', 'disconnect', '')
+  }
+
+  function disconnectResponse(response, callback) {
+    if (response === true) {
+      let connectButton = getElementById('connect')
+      connectButton.innerHTML = 'Connect'
+      connectButton.onclick = 'connect()'
+    }
+    if (callback) { callback() }
+  }
+
+  function send() {
+    httpRequest('POST', 'submit', {
+      xml: getElementById('tbXMLTransmit').value
+    })
   }
 
 </script>
@@ -203,6 +273,11 @@
         <p><label>Port:</label><input type="text" name="port" value="16992"></p>
         <p><label>Username:</label><input type="text" name="username" value="admin"></p>
         <p><label>Password:</label><input type="password" name="password" value=""></p>
+        <p><label></label><button id="connect" type="button" style="float: right; visibility: visible;"
+            onclick="toggleConnection()">Connect</button></p>
+        <p style="border-top: 1em solid transparent;"></p>
+        <p style="border: solid; border-width: 1px 0; margin: 5px 0;"></p>
+        <p style="border-bottom: 1em solid transparent;"></p>
         <p><label>API Call:</label><select id="apiCallList" onchange="apiCallChange(this)"></select></p>
         <p id="method" style="visibility: visible;"><label>Method:</label><select id="methodList"
             onchange="methodChange(this)"></select></p>
@@ -210,7 +285,7 @@
         <p id="xmlTransmit" style="visibility: visible;"><label>XML Transmit:</label><textarea id="tbXMLTransmit"
             name="xml" class="xml" value="" rows="10" cols="80"></textarea></p>
         <p><label></label><button id="submit" type="button" style="float: right; visibility: visible;"
-            onclick="send(this)">Submit</button></p>
+            onclick="send()">Submit</button></p>
         <p id="xmlReceive" style="visibility: visible;"><label>XML Received:</label><textarea id="tbXMLReceive"
             class="xml" rows="10" cols="80"></textarea></p>
       </form>
