@@ -60,9 +60,13 @@ app.post('/wsman', function (req, res) {
 
 app.post('/connect', function (req, res) {
   const request: ConnectionParameters = req.body
-  console.log(request)
   connection = new ConnectionHandler(request.address, request.port, request.username, request.password)
   connection.connect()
+  //(response) => {
+  //   if (response) {
+  //     res.send(true)
+  //   }
+  // })
 })
 
 app.post('/submit', function (req, res) {

@@ -177,7 +177,7 @@
         processHttpResponse(xhr.response, route, callback)
       }
     }
-    console.log('sending: ' + message)
+    console.log('sending: ' + JSON.stringify(message))
     xhr.send(JSON.stringify(message))
   }
 
