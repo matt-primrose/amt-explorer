@@ -119,16 +119,31 @@
     })
   }
 
+  function clearXMLTransmit() {
+    const xmlTransmit = document.getElementById('tbXMLTransmit')
+    xmlTransmit.value = ''
+  }
+
+  function clearXMLReceived() {
+    const xmlReceive = document.getElementById('tbXMLReceive')
+    xmlReceive.value = ''
+  }
 
   function apiCallChange(selectedValue) {
     currentAPI = selectedValue.value
     if (currentAPI === 'default') { return }
+    clearXMLTransmit()
+    clearXMLReceived()
     loadMethodCalls(currentAPI)
   }
 
   function methodChange(selectedValue) {
+    clearXMLReceived()
     currentMethod = selectedValue.value
-    if (currentMethod === 'default') { return }
+    if (currentMethod === 'default') { 
+      clearXMLTransmit()
+      return 
+    }
     let messageObj = {
       api: currentAPI,
       method: currentMethod
