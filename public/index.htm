@@ -86,28 +86,6 @@
   </style>
 </head>
 <script>
-  // const methods = {
-  //   default: { value: 'Select Method', view: [{ parameters: 'hidden' }] },
-  //   get: { value: 'GET', view: { parameters: 'hidden' } },
-  //   put: { value: 'PUT', view: { parameters: 'visible' } },
-  //   enumerate: { value: 'ENUMERATE', view: { parameters: 'hidden' } },
-  //   pull: { value: 'PULL', view: { parameters: 'visible' } }
-  // }
-
-  // const apiCalls = {
-  //   default: { 
-  //     value: 'Select API Call', 
-  //     class: 'default', 
-  //     view: { method: 'hidden', xmlTransmit: 'hidden', xmlReceive: 'hidden', submit: 'hidden' },
-  //     enabledMethods: []
-  //   },
-  //   GeneralSettings: { 
-  //     value: 'General Settings',
-  //     class: 'GeneralSettings',
-  //     view: { method: 'visible', xmlTransmit: 'visible', xmlReceive: 'visible', submit: 'visible' },
-  //     enabledMethods: [ methods.default, methods.get, methods.put ]
-  //   }
-  // }
 
   let Messages = null
   let globalAPICalls
@@ -118,21 +96,15 @@
 
   function pageLoad() {
     getClasses()
-    getConnectionStatus()
   }
 
-  function getConnectionStatus(callback) {
-    httpRequest('GET', 'connectionStatus', '', callback)
-  }
-
-  function loadAPICallList(apiCalls, callback) {
+  function loadAPICallList(apiCalls) {
     globalAPICalls = JSON.parse(apiCalls)
     let apiCallList = document.getElementById('apiCallList')
     apiCallList.options[apiCallList.options.length] = new Option('Select API Call', 'default', true, true)
     for (let item in globalAPICalls) {
       apiCallList.options[apiCallList.options.length] = new Option(item, item)
     }
-    if (callback) { callback() }
   }
 
   function loadMethodCalls(apiCall) {
@@ -161,6 +133,10 @@
       api: currentAPI,
       method: currentMethod
     }
+    const xml = document.getElementById('tbXMLTransmit')
+    if (xml.length > 0) {
+      messageObj.message = xml
+    }
     httpRequest('POST', 'wsman', messageObj)
   }
 
@@ -183,9 +159,6 @@
 
   function processHttpResponse(response, route, callback) {
     switch (route) {
-      case 'connectionStatus':
-        connectionStatusResponse(response, callback)
-        break
       case 'classes':
         loadAPICallList(response, callback)
         break
@@ -193,7 +166,7 @@
         populateXMLTransmit(response, callback)
         break
       case 'submit':
-        handleAMTResponse(response, callback)
+        handleAMTResponse(response)
         break
       case 'connect':
         connectResponse(response, callback)
@@ -206,57 +179,25 @@
     }
   }
 
-  function populateXMLTransmit(xmlMessage, callback) {
+  function populateXMLTransmit(xmlMessage) {
     let tbXMLTransmit = document.getElementById('tbXMLTransmit')
-    tbXMLTransmit.value = xmlMessage
-    if (callback) { callback() }
+    tbXMLTransmit.value = xmlMessage    
   }
 
-  function handleAMTResponse(response, callback) {
-    if (callback) { callback() }
-  }
-
-  function connectionStatusResponse(response, callback) {
-    connectionStatus = response
-    if (callback) { callback() }
-  }
-
-  function toggleConnection() {
-    console.log('toggleConnection request')
-    httpRequest('POST', 'connect', {
-      address: document.getElementsByName('host')[0].value,
-      port: document.getElementsByName('port')[0].value,
-      username: document.getElementsByName('username')[0].value,
-      password: document.getElementsByName('password')[0].value
-    })
-  }
-
-  function connectResponse(response, callback) {
-    if (response === true) {
-
-      let connectButton = getElementById('connect')
-      connectButton.innerHTML = 'Disconnect'
-      connectButton.onclick = 'disconnect()'
+  function handleAMTResponse(response) {
+    if (response) {
+      const xmlReceived = document.getElementById('tbXMLReceive')
+      xmlReceived.value = JSON.parse(JSON.stringify(response))
     }
-    if (callback) { callback() }
-  }
-
-  function disconnect() {
-    httpRequest('POST', 'disconnect', '')
-  }
-
-  function disconnectResponse(response, callback) {
-    if (response === true) {
-      let connectButton = getElementById('connect')
-      connectButton.innerHTML = 'Connect'
-      connectButton.onclick = 'connect()'
-    }
-    if (callback) { callback() }
   }
 
   function send() {
     httpRequest('POST', 'submit', {
-      xml: getElementById('tbXMLTransmit').value
+      address: document.getElementsByName('host')[0].value,
+      port: document.getElementsByName('port')[0].value,
+      username: document.getElementsByName('username')[0].value,
+      password: document.getElementsByName('password')[0].value,
+      message: document.getElementById('tbXMLTransmit').value
     })
   }
 
@@ -273,11 +214,6 @@
         <p><label>Port:</label><input type="text" name="port" value="16992"></p>
         <p><label>Username:</label><input type="text" name="username" value="admin"></p>
         <p><label>Password:</label><input type="password" name="password" value=""></p>
-        <p><label></label><button id="connect" type="button" style="float: right; visibility: visible;"
-            onclick="toggleConnection()">Connect</button></p>
-        <p style="border-top: 1em solid transparent;"></p>
-        <p style="border: solid; border-width: 1px 0; margin: 5px 0;"></p>
-        <p style="border-bottom: 1em solid transparent;"></p>
         <p><label>API Call:</label><select id="apiCallList" onchange="apiCallChange(this)"></select></p>
         <p id="method" style="visibility: visible;"><label>Method:</label><select id="methodList"
             onchange="methodChange(this)"></select></p>

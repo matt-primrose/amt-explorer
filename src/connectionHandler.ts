@@ -5,10 +5,8 @@
 import { Errback } from 'express'
 import { parse, HttpZResponseModel } from 'http-z'
 import * as net from 'node:net'
-import * as xml2js from 'xml2js'
 import { createHash } from 'crypto'
-import { Messages, Methods } from '@open-amt-cloud-toolkit/wsman-messages/amt'
-import { CIM } from '@open-amt-cloud-toolkit/wsman-messages'
+import { parser, parseBody, parseXML } from './common'
 
 export class DigestChallenge {
   realm: string
@@ -26,28 +24,36 @@ export class ConnectionParameters {
   consoleNonce?: string
 }
 
+export class httpRequest {
+  address: string
+  port: number
+  username: string
+  password: string
+  message: string
+}
+
 export class ConnectionHandler {
   socket: net.Socket
   connectionAttempts: number
   socketData: HttpZResponseModel
-  response: HttpZResponseModel
+  response: any
   messageId: number
   connectionParameters: ConnectionParameters
   rawChunkedData: string = ''
   digestChallenge: string = ''
   message: string = ''
-  resolve: (data) => void
   parser: any
   stripPrefix: any
   status: boolean = false
   nonceCounter: number = 1
   callback: any
 
-  constructor(address: string, port: number, username: string, password: string) {
+  constructor(address: string, port: number, username: string, password: string, message: string) {
     this.socket = null
     this.connectionAttempts = 0
     this.socketData = null
     this.response = null
+    this.message = message
     this.messageId = 0
     this.connectionParameters = {
       address: address,
@@ -55,12 +61,10 @@ export class ConnectionHandler {
       username: username,
       password: password
     }
-    //this.stripPrefix = require('xml2js/lib/processors').stripPrefix
-    this.stripPrefix = xml2js.processors.stripPrefix
-    this.parser = new xml2js.Parser({ ignoreAttrs: true, mergeAttrs: false, explicitArray: false, tagNameProcessors: [this.stripPrefix], valueProcessors: [xml2js.processors.parseNumbers, xml2js.processors.parseBooleans] })
+    this.parser = parser
   }
 
-  connect = (callback?): void => {
+  connect = (callback: any): void => {
     this.callback = callback
     if (this.socket == null) {
       this.socket = new net.Socket()
@@ -83,37 +87,43 @@ export class ConnectionHandler {
   }
 
   onSocketData = (data: string): void => {
-    console.log(`RECEIVED FROM AMT:\n\r${data}\n\r`)
     this.rawChunkedData += data
     if (this.rawChunkedData.includes('</html>') || this.rawChunkedData.includes('0\r\n\r\n')) {
       try {
+        console.log(`RECEIVED FROM AMT:\n\r${this.rawChunkedData}`)
         this.socketData = parse(this.rawChunkedData) as HttpZResponseModel
         if (this.socketData.statusCode === 401) {
           this.close()
-          this.connectionParameters.digestChallenge = this.parseAuthenticateResponseHeader(this.socketData.headers[0].value)
-          const wrappedMessage = this.wrapIt(this.message, this.connectionParameters)
-          const bufferArray = Buffer.from(wrappedMessage)
-          this.connect()
-          this.socket.write(bufferArray)
+          this.connectionParameters.digestChallenge = this.getAuthorizationHeader(this.socketData)
+          this.sendData(this.message, this.connectionParameters)
         } else if (this.socketData.statusCode === 200) {
-          const xmlBody = this.parseBody(this.socketData)
-          this.response = this.parseXML(xmlBody)
-          this.callback(this.response)
+          const xmlBody = parseBody(this.socketData)
+          this.callback(xmlBody)
+          this.close()
+        } else {
+          console.error(this.socketData.statusCode)
         }
       } catch (err) {
         console.error(err)
-        // this.callback(this.rawChunkedData)
       }
-      this.rawChunkedData = null
+      this.rawChunkedData = ''
     }
   }
 
   onSocketClosed = (): void => {
-    console.log(`SOCKET CLOSED socket: ${this.socket.readyState}\n\r`)
+    if (this.socket !== null) {
+      console.log(`SOCKET CLOSED socket: ${this.socket.readyState}\n\r`)
+    } else {
+      console.log(`SOCKET CLOSED socket: closed`)
+    }
   }
 
   onTimeout = (): void => {
-    console.log(`SOCKET TIMEOUT socket: ${this.socket.readyState}\n\r`)
+    if (this.socket !== null) {
+      console.log(`SOCKET TIMEOUT socket: ${this.socket.readyState}\n\r`)
+    } else {
+      console.log(`SOCKET TIMEOUT socket: closed`)
+    }
   }
 
   onError = (err: Errback): void => {
@@ -121,53 +131,18 @@ export class ConnectionHandler {
   }
 
   onSocketReady = (): void => {
-    console.log('SOCKET READY\n\r')
-    setTimeout(() => { this.amtAuthentication() }, 1000)
+    console.log(`SOCKET READY socket: ${this.socket.readyState}`)
+    this.sendData(this.message, this.connectionParameters)
   }
 
-  amtAuthentication = (): void => {
-    const cim = new CIM.Messages()
-    this.message = cim.SoftwareIdentity(CIM.Methods.ENUMERATE)
-    const wrappedMessage = this.wrapIt(this.message, this.connectionParameters)
-    this.socket.write(wrappedMessage)
-  }
-
-  sendData = async (data: string, params?: ConnectionParameters): Promise<string> => {
-    return await new Promise((resolve, reject) => {
-
-    })
-  }
-
-  parseBody = (message: HttpZResponseModel): string => {
-    let xmlBody: string = ''
-    // parse the body until its length is greater than 5, because body ends with '0\r\n\r\n'
-    while (message.body.text.length > 5) {
-      const chunkLength = message.body.text.indexOf('\r\n')
-      if (chunkLength < 0) {
-        return ''
-      }
-      // converts hexadecimal chunk size to integer
-      const chunkSize = parseInt(message.body.text.substring(0, chunkLength), 16)
-      if (message.body.text.length < chunkLength + 2 + chunkSize + 2) {
-        return ''
-      }
-      const data = message.body.text.substring(chunkLength + 2, chunkLength + 2 + chunkSize)
-      message.body.text = message.body.text.substring(chunkLength + 2 + chunkSize + 2)
-      xmlBody += data
+  sendData = (data: string, params?: ConnectionParameters): void => {
+    if (this.socket === null) {
+      this.connect(this.callback)
     }
-    return xmlBody
-  }
-
-  parseXML = (xmlBody: string): any => {
-    let wsmanResponse: string
-    this.parser.parseString(xmlBody, (err, result) => {
-      if (err) {
-        wsmanResponse = null
-      } else {
-        wsmanResponse = result
-      }
-    })
-    return wsmanResponse
+    if (this.socket.readyState === 'open') {
+      const wrappedMessage = this.wrapIt(data, params)
+      this.socket.write(wrappedMessage)
+    }
   }
 
   wrapIt = (data, connectionParams) => {
@@ -184,11 +159,6 @@ export class ConnectionHandler {
         // console nonce should be a unique opaque quoted string
         connectionParams.consoleNonce = Math.random().toString(36).substring(7)
         const nc = ('00000000' + (this.nonceCounter++).toString(16)).slice(-8)
-        // console.log(`username: ${connectionParams.username}`)
-        // console.log(`password: ${connectionParams.password}`)
-        // console.log(`realm: ${connectionParams.digestChallenge.realm}`)
-        // console.log(`nonce: ${connectionParams.digestChallenge.nonce}`)
-        // console.log(`consoleNonce: ${connectionParams.consoleNonce}`)
         const HA1 = this.hashIt(`${connectionParams.username}:${connectionParams.digestChallenge.realm}:${connectionParams.password}`)
         const HA2 = this.hashIt(`${action}:${url}`)
         responseDigest = this.hashIt(`${HA1}:${connectionParams.digestChallenge.nonce}:${nc}:${connectionParams.consoleNonce}:${connectionParams.digestChallenge.qop}:${HA2}`)
@@ -244,8 +214,7 @@ export class ConnectionHandler {
     return obj
   }
 
-  addAuthorizationHeader = (context) => {
-    const { message } = context
+  getAuthorizationHeader = (message) => {
     const found = message.headers?.find(item => item.name === 'Www-Authenticate')
     if (found != null) {
       return this.parseAuthenticateResponseHeader(found.value)

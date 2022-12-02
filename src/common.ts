@@ -3,12 +3,15 @@
 * SPDX-License-Identifier: Apache-2.0
 **********************************************************************/
 
-import { AMT, CIM, IPS } from "@open-amt-cloud-toolkit/wsman-messages";
+import { AMT, CIM, IPS } from "@open-amt-cloud-toolkit/wsman-messages"
+import * as xml2js from 'xml2js'
+import { parse, HttpZResponseModel } from 'http-z'
 
 export class BodyObj {
   class: string
   api: string
   method: string
+  message: string
 }
 
 export const ClassMetaData = {
@@ -147,4 +150,39 @@ export const ClassMetaData = {
   IPS_IEEE8021xSettings: {
     Methods: [IPS.Methods.PULL, IPS.Methods.ENUMERATE, IPS.Methods.PUT, IPS.Methods.SET_CERTIFICATES]
   }
+}
+
+export const stripPrefix = xml2js.processors.stripPrefix
+export const parser = new xml2js.Parser({ ignoreAttrs: true, mergeAttrs: false, explicitArray: false, tagNameProcessors: [stripPrefix], valueProcessors: [xml2js.processors.parseNumbers, xml2js.processors.parseBooleans] })
+
+export const parseBody = (message: HttpZResponseModel): string => {
+  let xmlBody: string = ''
+  // parse the body until its length is greater than 5, because body ends with '0\r\n\r\n'
+  while (message.body.text.length > 5) {
+    const chunkLength = message.body.text.indexOf('\r\n')
+    if (chunkLength < 0) {
+      return ''
+    }
+    // converts hexadecimal chunk size to integer
+    const chunkSize = parseInt(message.body.text.substring(0, chunkLength), 16)
+    if (message.body.text.length < chunkLength + 2 + chunkSize + 2) {
+      return ''
+    }
+    const data = message.body.text.substring(chunkLength + 2, chunkLength + 2 + chunkSize)
+    message.body.text = message.body.text.substring(chunkLength + 2 + chunkSize + 2)
+    xmlBody += data
+  }
+  return xmlBody
+}
+
+export const parseXML = (xmlBody: string): any => {
+  let wsmanResponse: string
+  parser.parseString(xmlBody, (err, result) => {
+    if (err) {
+      wsmanResponse = null
+    } else {
+      wsmanResponse = result
+    }
+  })
+  return wsmanResponse
 }
