@@ -7,13 +7,6 @@ import { AMT, CIM, IPS } from "@open-amt-cloud-toolkit/wsman-messages"
 import * as xml2js from 'xml2js'
 import { parse, HttpZResponseModel } from 'http-z'
 
-export class BodyObj {
-  class: string
-  api: string
-  method: string
-  message: string
-}
-
 export const ClassMetaData = {
   AMT_AuditLog: {
     Methods: [AMT.Methods.READ_RECORDS]
@@ -154,7 +147,14 @@ export const ClassMetaData = {
 
 export const stripPrefix = xml2js.processors.stripPrefix
 export const parser = new xml2js.Parser({ ignoreAttrs: true, mergeAttrs: false, explicitArray: false, tagNameProcessors: [stripPrefix], valueProcessors: [xml2js.processors.parseNumbers, xml2js.processors.parseBooleans] })
-
+export class error {
+  status: number
+  error: string
+  constructor(status: number, error: string) {
+    this.status = status
+    this.error = error
+  }
+}
 export const parseBody = (message: HttpZResponseModel): string => {
   let xmlBody: string = ''
   // parse the body until its length is greater than 5, because body ends with '0\r\n\r\n'

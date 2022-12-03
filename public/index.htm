@@ -98,6 +98,41 @@
     getClasses()
   }
 
+  function attemptConnection() {
+    console.log('connect request')
+    httpRequest('POST', 'connect', JSON.stringify({
+      address: document.getElementsByName('host')[0].value,
+      port: document.getElementsByName('port')[0].value,
+      username: document.getElementsByName('username')[0].value,
+      password: document.getElementsByName('password')[0].value
+    }))
+  }
+
+  function connectResponse(response) {
+    console.log(`connectResponse: ${response}`)
+    if (response == 'true') {
+      let connectButton = document.getElementById('connect')
+      let disconnectButton = document.getElementById('disconnect')
+      connectButton.style.display = 'none'
+      disconnectButton.style.display = 'inline'
+    }
+  }
+
+  function attemptDisconnection() {
+    console.log('disconnect request')
+    httpRequest('DELETE', 'disconnect', '')
+  }
+
+  function disconnectResponse(response) {
+    console.log(response)
+    if (response == 'false') {
+      let connectButton = document.getElementById('connect')
+      let disconnectButton = document.getElementById('disconnect')
+      connectButton.style.display = 'inline'
+      disconnectButton.style.display = 'none'
+    }
+  }
+
   function loadAPICallList(apiCalls) {
     globalAPICalls = JSON.parse(apiCalls)
     let apiCallList = document.getElementById('apiCallList')
@@ -140,19 +175,15 @@
   function methodChange(selectedValue) {
     clearXMLReceived()
     currentMethod = selectedValue.value
-    if (currentMethod === 'default') { 
+    if (currentMethod === 'default') {
       clearXMLTransmit()
-      return 
+      return
     }
     let messageObj = {
       api: currentAPI,
       method: currentMethod
     }
-    const xml = document.getElementById('tbXMLTransmit')
-    if (xml.length > 0) {
-      messageObj.message = xml
-    }
-    httpRequest('POST', 'wsman', messageObj)
+    httpRequest('POST', 'wsman', JSON.stringify(messageObj))
   }
 
   function getClasses() {
@@ -168,8 +199,7 @@
         processHttpResponse(xhr.response, route, callback)
       }
     }
-    console.log('sending: ' + JSON.stringify(message))
-    xhr.send(JSON.stringify(message))
+    xhr.send(message)
   }
 
   function processHttpResponse(response, route, callback) {
@@ -187,7 +217,7 @@
         connectResponse(response, callback)
         break
       case 'disconnect':
-        disconnectResponse(response, callback)
+        disconnectResponse(response)
         break
       default:
         console.error('unknown route')
@@ -196,7 +226,7 @@
 
   function populateXMLTransmit(xmlMessage) {
     let tbXMLTransmit = document.getElementById('tbXMLTransmit')
-    tbXMLTransmit.value = xmlMessage    
+    tbXMLTransmit.value = xmlMessage
   }
 
   function handleAMTResponse(response) {
@@ -207,13 +237,14 @@
   }
 
   function send() {
-    httpRequest('POST', 'submit', {
+    httpRequest('POST', 'submit', JSON.stringify({
       address: document.getElementsByName('host')[0].value,
       port: document.getElementsByName('port')[0].value,
       username: document.getElementsByName('username')[0].value,
       password: document.getElementsByName('password')[0].value,
-      message: document.getElementById('tbXMLTransmit').value
-    })
+      apiCall: currentAPI,
+      method: currentMethod
+    }))
   }
 
 </script>
@@ -229,6 +260,14 @@
         <p><label>Port:</label><input type="text" name="port" value="16992"></p>
         <p><label>Username:</label><input type="text" name="username" value="admin"></p>
         <p><label>Password:</label><input type="password" name="password" value=""></p>
+        <p><label></label><button id="connect" type="button" style="float: right; display: inline;"
+            onclick=attemptConnection()>Connect</button>
+          <button id="disconnect" type="button" style="float: right; display: none;"
+            onclick=attemptDisconnection()>Disconnect</button>
+        </p>
+        <p style="border-top: 1em solid transparent;"></p>
+        <p style="border: solid; border-width: 1px 0; margin: 5px 0;"></p>
+        <p style="border-bottom: 1em solid transparent;"></p>
         <p><label>API Call:</label><select id="apiCallList" onchange="apiCallChange(this)"></select></p>
         <p id="method" style="visibility: visible;"><label>Method:</label><select id="methodList"
             onchange="methodChange(this)"></select></p>

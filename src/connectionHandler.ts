@@ -6,7 +6,9 @@ import { Errback } from 'express'
 import { parse, HttpZResponseModel } from 'http-z'
 import * as net from 'node:net'
 import { createHash } from 'crypto'
-import { parser, parseBody, parseXML } from './common'
+import { error, parseBody, parseXML } from './common'
+import { AMT } from '@open-amt-cloud-toolkit/wsman-messages'
+import { MessageHandler, MessageObject } from './messageHandler'
 
 export class DigestChallenge {
   realm: string
@@ -22,6 +24,12 @@ export class ConnectionParameters {
   password: string
   digestChallenge?: DigestChallenge
   consoleNonce?: string
+  constructor(address: string, port: number, username: string, password: string) {
+    this.address = address
+    this.port = port
+    this.username = username
+    this.password = password
+  }
 }
 
 export class httpRequest {
@@ -29,43 +37,47 @@ export class httpRequest {
   port: number
   username: string
   password: string
-  message: string
+  apiCall: string
+  method: string
 }
 
 export class ConnectionHandler {
   socket: net.Socket
   connectionAttempts: number
   socketData: HttpZResponseModel
-  response: any
+  request: httpRequest
+  messageObject: MessageObject
+  messageHandler: MessageHandler
   messageId: number
   connectionParameters: ConnectionParameters
   rawChunkedData: string = ''
-  digestChallenge: string = ''
-  message: string = ''
-  parser: any
-  stripPrefix: any
-  status: boolean = false
   nonceCounter: number = 1
   callback: any
 
-  constructor(address: string, port: number, username: string, password: string, message: string) {
+  constructor() {
     this.socket = null
     this.connectionAttempts = 0
     this.socketData = null
-    this.response = null
-    this.message = message
+    this.request = null
     this.messageId = 0
-    this.connectionParameters = {
-      address: address,
-      port: port,
-      username: username,
-      password: password
-    }
-    this.parser = parser
+    this.connectionParameters = null
+    this.rawChunkedData = ''
+    this.messageHandler = new MessageHandler()
   }
 
-  connect = (callback: any): void => {
+  connected = () => { if (this.connectionParameters == null || this.connectionParameters.digestChallenge == null) { return false } else { return true } }
+  connect = (request: httpRequest, callback: any): void => {
+    this.request = request
     this.callback = callback
+    // This is just a connect call.  Use a General Settings GET call to perform authentication with AMT
+    if (this.request.apiCall == null || this.request.method == null) {
+      this.request.apiCall = AMT.Classes.AMT_GENERAL_SETTINGS
+      this.request.method = AMT.Methods.GET
+    }
+    this.messageObject = this.messageHandler.httpRequest2MessageObject(request)
+    if (this.connectionParameters == null) {
+      this.connectionParameters = new ConnectionParameters(request.address, request.port, request.username, request.password)
+    }
     if (this.socket == null) {
       this.socket = new net.Socket()
       this.socket.setEncoding('binary')
@@ -76,6 +88,17 @@ export class ConnectionHandler {
       this.socket.on('error', this.onError)
       this.socket.on('ready', this.onSocketReady)
       this.socket.connect(this.connectionParameters.port, this.connectionParameters.address)
+    }
+  }
+
+  sendCallback(err: error, response?: any) {
+    if (this.callback == null) { return }
+    if (err !== null) {
+      this.callback(err)
+    } else if (response !== null) {
+      this.callback(response)
+    } else {
+      this.callback('no err, no response')
     }
   }
 
@@ -95,16 +118,18 @@ export class ConnectionHandler {
         if (this.socketData.statusCode === 401) {
           this.close()
           this.connectionParameters.digestChallenge = this.getAuthorizationHeader(this.socketData)
-          this.sendData(this.message, this.connectionParameters)
+          this.sendData(this.messageObject)
         } else if (this.socketData.statusCode === 200) {
           const xmlBody = parseBody(this.socketData)
-          this.callback(xmlBody)
+          this.sendCallback(null, xmlBody)
           this.close()
         } else {
-          console.error(this.socketData.statusCode)
+          console.error(`Error: ${this.socketData.statusCode}`)
+          this.sendCallback(new error(this.socketData.statusCode, 'socket data error'))
         }
       } catch (err) {
-        console.error(err)
+        // random garbage comes in here, ignore it
+        // this.sendCallback(new error(500, err))
       }
       this.rawChunkedData = ''
     }
@@ -112,40 +137,54 @@ export class ConnectionHandler {
 
   onSocketClosed = (): void => {
     if (this.socket !== null) {
-      console.log(`SOCKET CLOSED socket: ${this.socket.readyState}\n\r`)
+      console.log(`onClosed socket: ${this.socket.readyState}\n\r`)
     } else {
-      console.log(`SOCKET CLOSED socket: closed`)
+      console.log(`onClosed socket: null`)
     }
   }
 
   onTimeout = (): void => {
     if (this.socket !== null) {
-      console.log(`SOCKET TIMEOUT socket: ${this.socket.readyState}\n\r`)
+      console.log(`onTimeout: socket: ${this.socket.readyState}\n\r`)
     } else {
-      console.log(`SOCKET TIMEOUT socket: closed`)
+      console.log(`onTimeout socket: null`)
     }
   }
 
-  onError = (err: Errback): void => {
-    console.error(err)
+  onError = (err): void => {
+    console.error(`onError:${err}`)
+    this.sendCallback(new error(500, err))
   }
 
   onSocketReady = (): void => {
     console.log(`SOCKET READY socket: ${this.socket.readyState}`)
-    this.sendData(this.message, this.connectionParameters)
+    this.sendData(this.messageObject)
   }
 
-  sendData = (data: string, params?: ConnectionParameters): void => {
+  sendData = (msgObj: MessageObject): void => {
+    this.messageObject = msgObj
     if (this.socket === null) {
-      this.connect(this.callback)
+      if (this.request === null) {
+        throw new Error('Not Connected')
+      } else {
+        console.log('socket null, creating new socket')
+        this.connect(this.request, this.callback)
+      }
     }
     if (this.socket.readyState === 'open') {
-      const wrappedMessage = this.wrapIt(data, params)
+      const messageHandler = new MessageHandler()
+      const msgObj: MessageObject = messageHandler.splitAPICall(this.request.apiCall)
+      msgObj.method = this.request.method
+      const message = messageHandler.getMessage(msgObj, this)
+      console.log(`message:\n\r${message}\n\rparams:\n\r${JSON.stringify(this.connectionParameters)}`)
+      const wrappedMessage = this.wrapIt(message)
       this.socket.write(wrappedMessage)
+    } else {
+      throw new Error('Socket not ready')
     }
   }
 
-  wrapIt = (data, connectionParams) => {
+  wrapIt = (data) => {
     try {
       const url = '/wsman'
       const action = 'POST'
@@ -153,29 +192,29 @@ export class ConnectionHandler {
       if (data == null) {
         return null
       }
-      if (connectionParams.digestChallenge != null) {
+      if (this.connectionParameters.digestChallenge != null) {
         // Prepare an Authorization request header from the 401 unauthorized response from AMT
         let responseDigest = null
         // console nonce should be a unique opaque quoted string
-        connectionParams.consoleNonce = Math.random().toString(36).substring(7)
+        this.connectionParameters.consoleNonce = Math.random().toString(36).substring(7)
         const nc = ('00000000' + (this.nonceCounter++).toString(16)).slice(-8)
-        const HA1 = this.hashIt(`${connectionParams.username}:${connectionParams.digestChallenge.realm}:${connectionParams.password}`)
+        const HA1 = this.hashIt(`${this.connectionParameters.username}:${this.connectionParameters.digestChallenge.realm}:${this.connectionParameters.password}`)
         const HA2 = this.hashIt(`${action}:${url}`)
-        responseDigest = this.hashIt(`${HA1}:${connectionParams.digestChallenge.nonce}:${nc}:${connectionParams.consoleNonce}:${connectionParams.digestChallenge.qop}:${HA2}`)
+        responseDigest = this.hashIt(`${HA1}:${this.connectionParameters.digestChallenge.nonce}:${nc}:${this.connectionParameters.consoleNonce}:${this.connectionParameters.digestChallenge.qop}:${HA2}`)
         const authorizationRequestHeader = this.digestIt({
-          username: connectionParams.username,
-          realm: connectionParams.digestChallenge.realm,
-          nonce: connectionParams.digestChallenge.nonce,
+          username: this.connectionParameters.username,
+          realm: this.connectionParameters.digestChallenge.realm,
+          nonce: this.connectionParameters.digestChallenge.nonce,
           uri: url,
-          qop: connectionParams.digestChallenge.qop,
+          qop: this.connectionParameters.digestChallenge.qop,
           response: responseDigest,
           nc,
-          cnonce: connectionParams.consoleNonce
+          cnonce: this.connectionParameters.consoleNonce
         })
         msg += `Authorization: ${authorizationRequestHeader}\r\n`
       }
       msg += Buffer.from([
-        `Host: ${connectionParams.address}:${connectionParams.port}`,
+        `Host: ${this.connectionParameters.address}:${this.connectionParameters.port}`,
         `Content-Length: ${data.length}`,
         '',
         data
