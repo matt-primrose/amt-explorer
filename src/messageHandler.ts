@@ -1,12 +1,12 @@
 /*********************************************************************
-* Copyright (c) Intel Corporation 2021
+* Copyright (c) Intel Corporation 2022
 * SPDX-License-Identifier: Apache-2.0
 **********************************************************************/
 
 import { AMT, IPS, CIM } from '@open-amt-cloud-toolkit/wsman-messages'
 import { Methods } from '@open-amt-cloud-toolkit/wsman-messages/amt'
-import { ClassMetaData, parseBody, parseXML } from './common'
-import { ConnectionHandler, httpRequest } from './connectionHandler'
+import { Logger, LogType } from './common'
+import { SocketHandler } from './socketHandler'
 
 export class MessageObject {
   class: string
@@ -15,10 +15,20 @@ export class MessageObject {
   xml?: string
 }
 
+export class MessageRequest {
+  address: string
+  port: number
+  username: string
+  password: string
+  apiCall: string
+  method: string
+}
+
 export class MessageHandler {
+  response: any
   constructor() { }
 
-  splitAPICall = (apiCall: string): MessageObject => {
+  public splitAPICall = (apiCall: string): MessageObject => {
     let messageObj = new MessageObject()
     if (apiCall.includes('_')) {
       let splitAPI = apiCall.split('_')
@@ -28,10 +38,13 @@ export class MessageHandler {
     return messageObj
   }
 
-  getMessage = (messageObj: MessageObject, connectionHandler: ConnectionHandler): string => {
+  public createMessage = (messageObj: MessageObject, socketHandler?: SocketHandler): string => {
     if (messageObj.api !== null && messageObj.class !== null && messageObj.method !== null) {
       if (messageObj.method === Methods.PULL) {
-        const enumerationContext = this.getEnumerationContext(messageObj)
+        Logger(LogType.DEBUG, 'MESSAGEHANDLER', JSON.stringify(`getMessage messageObj:\n\r${JSON.stringify(messageObj)}`))
+        if (socketHandler == null) { return 'error: missing socket handler' }
+        this.getEnumerationContext(messageObj, socketHandler)
+
       } else if (messageObj.method === Methods.PUT) {
 
       } else {
@@ -52,18 +65,13 @@ export class MessageHandler {
     }
   }
 
-  httpRequest2MessageObject = (request: httpRequest): MessageObject => {
+  public MessageRequest2MessageObject = (request: MessageRequest): MessageObject => {
     const msgObj = this.splitAPICall(request.apiCall)
     msgObj.method = request.method
     return msgObj
   }
 
-  getEnumerationContext = (messageObj: MessageObject): string => {
-    let enumerationContext: string
-    const tempHttpRequest: httpRequest = new httpRequest()
-    tempHttpRequest.apiCall = messageObj.api
-    
-    return enumerationContext
-  }
+  public getEnumerationContext = (msgObj: MessageObject, socketHandler: SocketHandler): void => {
 
+  }
 }

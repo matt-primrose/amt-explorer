@@ -1,11 +1,12 @@
 /*********************************************************************
-* Copyright (c) Intel Corporation 2021
+* Copyright (c) Intel Corporation 2022
 * SPDX-License-Identifier: Apache-2.0
 **********************************************************************/
 
 import { AMT, CIM, IPS } from "@open-amt-cloud-toolkit/wsman-messages"
 import * as xml2js from 'xml2js'
-import { parse, HttpZResponseModel } from 'http-z'
+import { HttpZResponseModel } from 'http-z'
+import { logLevel } from "."
 
 export const ClassMetaData = {
   AMT_AuditLog: {
@@ -185,4 +186,29 @@ export const parseXML = (xmlBody: string): any => {
     }
   })
   return wsmanResponse
+}
+
+export enum LogType {
+  ERROR = 'ERROR',
+  INFO = 'INFO',
+  WARNING = 'WARNING',
+  DEBUG = 'DEBUG'
+}
+export const Logger = (type: LogType, module: string, msg: string): void => {
+  switch(type.toUpperCase()) {
+    case LogType.ERROR:
+      console.error(`${module}:${msg}`)
+      break
+    case LogType.DEBUG:
+      if (logLevel.toUpperCase() === 'DEBUG') { console.debug(`${module}:${msg}`) }
+      break
+    case LogType.INFO:
+      console.info(`${module}:${msg}`)
+      break
+    case LogType.WARNING:
+      console.warn(`${module}:${msg}`)
+      break
+    default:
+      return
+  }
 }

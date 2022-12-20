@@ -63,7 +63,8 @@
 
     form {
       display: table;
-      border-collapse: collapse;
+      border-collapse: separate;
+      border-spacing: 0 5px;
     }
 
     p {
@@ -110,11 +111,13 @@
 
   function connectResponse(response) {
     console.log(`connectResponse: ${response}`)
-    if (response == 'true') {
+    if (response == 'connected') {
       let connectButton = document.getElementById('connect')
       let disconnectButton = document.getElementById('disconnect')
       connectButton.style.display = 'none'
       disconnectButton.style.display = 'inline'
+    } else {
+      // error message
     }
   }
 
@@ -125,7 +128,7 @@
 
   function disconnectResponse(response) {
     console.log(response)
-    if (response == 'false') {
+    if (response == 'disconnected') {
       let connectButton = document.getElementById('connect')
       let disconnectButton = document.getElementById('disconnect')
       connectButton.style.display = 'inline'
@@ -161,7 +164,9 @@
 
   function clearXMLReceived() {
     const xmlReceive = document.getElementById('tbXMLReceive')
+    const jsonReceive = document.getElementById('tbJSONReceive')
     xmlReceive.value = ''
+    jsonReceive.value = ''
   }
 
   function apiCallChange(selectedValue) {
@@ -231,8 +236,11 @@
 
   function handleAMTResponse(response) {
     if (response) {
+      console.log(JSON.parse(response))
       const xmlReceived = document.getElementById('tbXMLReceive')
-      xmlReceived.value = JSON.parse(JSON.stringify(response))
+      const jsonReceived = document.getElementById('tbJSONReceive')
+      xmlReceived.value = JSON.parse(response).xmlBody
+      jsonReceived.value = JSON.stringify(JSON.parse(response).jsonBody.Envelope.Body, null, 2)
     }
   }
 
@@ -277,6 +285,8 @@
         <p><label></label><button id="submit" type="button" style="float: right; visibility: visible;"
             onclick="send()">Submit</button></p>
         <p id="xmlReceive" style="visibility: visible;"><label>XML Received:</label><textarea id="tbXMLReceive"
+            class="xml" rows="10" cols="80"></textarea></p>
+        <p id="jsonReceive" style="visibility: visible;"><label>JSON Received:</label><textarea id="tbJSONReceive"
             class="xml" rows="10" cols="80"></textarea></p>
       </form>
     </main>
