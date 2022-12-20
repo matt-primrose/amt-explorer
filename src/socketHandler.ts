@@ -5,8 +5,7 @@
 
 import { parse, HttpZResponseModel } from 'http-z';
 import { Socket } from 'net';
-import { Logger, LogType, parseBody } from './common';
-import { HttpHandler } from './httpHandler';
+import { Logger, LogType } from './common';
 
 export class SocketParameters {
   address: string

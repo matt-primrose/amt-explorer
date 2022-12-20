@@ -78,7 +78,10 @@ app.post('/wsman', function (req, res) {
 app.post('/submit', async function (req, res) {
   if (digestAuth == null || socketHandler == null) {
     res.status(500).send('Error: not connected')
+    Logger(LogType.ERROR, 'INDEX', 'Error: not connected')
+    return
   }
+  let message
   const request: MessageRequest = req.body
   const messageHandler = new MessageHandler()
   const msgObj = messageHandler.MessageRequest2MessageObject(request)
@@ -86,8 +89,9 @@ app.post('/submit', async function (req, res) {
   const httpResponse = new HttpResponse()
   switch (msgObj.method) {
     case Methods.GET:
-      const message = await sendToSocket(msgObj)
-      if (message.statusCode == 401) {
+    case Methods.ENUMERATE:
+      message = await sendToSocket(msgObj)
+      if (message.statusCode === 401) {
         const retry = await handleRetry(msgObj, message)
         httpResponse.xmlBody = parseBody(retry)
         httpResponse.jsonBody = parseXML(httpResponse.xmlBody)
@@ -97,6 +101,12 @@ app.post('/submit', async function (req, res) {
         httpResponse.jsonBody = parseXML(httpResponse.xmlBody)
         res.status(message.statusCode).send(httpResponse)
       }
+      break
+    case Methods.PULL:
+      message = await sendToSocket(msgObj)
+    default:
+      res.status(500).send('unsupported method')
+      return
   }
 })
 
