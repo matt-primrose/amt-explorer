@@ -96,5 +96,5 @@ app.delete('/disconnect', function (req, res) {
 })
 
 app.listen(serverPort, () => {
-  Logger(LogType.INFO, 'INDEX', `Example app running at http://localhost:3000/index.htm`)
+  Logger(LogType.INFO, 'AMT Explorer running at', ` http://localhost:3000/index.htm`)
 })
