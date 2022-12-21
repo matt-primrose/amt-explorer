@@ -110,16 +110,6 @@ export class MessageHandler {
     }
   }
 
-  private removeReadOnlyProperties = (apiCall: string, jsonObject): object => {
-    ClassMetaData[apiCall].readOnlyProperties.forEach(element => {
-      if (jsonObject.hasOwnProperty(element)) {
-        console.log(`removing:${element}`)
-        delete jsonObject[element]
-      }
-    })
-    return jsonObject
-  }
-
   // Handles getting the enumerationContext from AMT in order to create a PULL message
   private createPullMessage = async (messageObject: MessageObject): Promise<string> => {
     const enumerationContextRequestObj = new MessageObject(messageObject.class, messageObject.api, Methods.ENUMERATE)
@@ -136,7 +126,7 @@ export class MessageHandler {
     const getRequestResponse = await this.sendMessage(getRequestObj)
     messageObject.classObject = this.setClassObject(messageObject)
     const key = Object.keys(getRequestResponse.jsonResponse.Envelope.Body)[0]
-    const jsonResponse = this.removeReadOnlyProperties(messageObject.apiCall, getRequestResponse.jsonResponse.Envelope.Body[key])
+    const jsonResponse = getRequestResponse.jsonResponse.Envelope.Body[key]
     console.log(JSON.stringify(jsonResponse))
     if (ClassMetaData[messageObject.apiCall].putPosition === 1) {
       return (messageObject.classObject[messageObject.api](messageObject.method, jsonResponse))
