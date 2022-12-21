@@ -185,7 +185,7 @@
       return
     }
     let messageObj = {
-      api: currentAPI,
+      apiCall: currentAPI,
       method: currentMethod
     }
     httpRequest('POST', 'wsman', JSON.stringify(messageObj))
@@ -250,6 +250,7 @@
       port: document.getElementsByName('port')[0].value,
       username: document.getElementsByName('username')[0].value,
       password: document.getElementsByName('password')[0].value,
+      xml: document.getElementById('tbXMLTransmit').value,
       apiCall: currentAPI,
       method: currentMethod
     }))
