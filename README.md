@@ -17,6 +17,10 @@ Open browser and navigate to address in terminal
 AMT Explorer running at: http://localhost:3000/index.htm
 ```
 
+<p align="center">
+<img src="assets/animations/amt-explorer.gif" width="650" />
+</p>
+
 Fill out Host, Username, and Password for the AMT device to connect to; click connect
 
 Select an API Call and Method from the drop down lists.  XML Transmit will populate with the XML formatted WSMAN call to send to AMT
