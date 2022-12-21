@@ -5,21 +5,25 @@
 
 import { AMT, IPS, CIM } from '@open-amt-cloud-toolkit/wsman-messages'
 import { Methods } from '@open-amt-cloud-toolkit/wsman-messages/amt'
-import { Logger, LogType, parseBody } from './common'
+import { ClassMetaData, Logger, LogType, parseBody } from './common'
 import { DigestAuth } from './digestAuth'
 import { SocketHandler } from './socketHandler'
 import { HttpZResponseModel } from 'http-z'
 import * as xml2js from 'xml2js'
 
+// Object holder for MessageHandler class.  Holds all of the relevant information for the life cycle of a message
 export class MessageObject {
-  class: string
   api: string
-  method?: string
-  xml?: string
+  apiCall: string
+  class: string
+  classObject: any
   enumerationContext?: string
+  error: string[]
+  jsonResponse?: any
+  method?: string
   statusCode?: number
+  xml?: string
   xmlResponse?: string
-  jsonResponse?: object
   constructor(msgClass?: string, msgAPI?: string, msgMethod?: string, msgXML?: string, enumerationContext?: string) {
     this.class = msgClass
     this.api = msgAPI
@@ -29,14 +33,11 @@ export class MessageObject {
   }
 }
 
+// Object specifying the data required to be provided to MessageHandler to create a MessageObject
 export class MessageRequest {
-  address: string
-  port: number
-  username: string
-  password: string
   apiCall: string
   method: string
-  xml: string
+  xml?: string
 }
 
 export class MessageHandler {
@@ -52,83 +53,106 @@ export class MessageHandler {
     this.parser = new xml2js.Parser({ ignoreAttrs: true, mergeAttrs: false, explicitArray: false, tagNameProcessors: [this.stripPrefix], valueProcessors: [this.myParseNumbers, xml2js.processors.parseBooleans] })
   }
 
+  // Splits the apiCall coming in on the apiCall property of a MessageRequest object
   private splitAPICall = (apiCall: string): MessageObject => {
-    let messageObj = new MessageObject()
+    let messageObject = new MessageObject()
     if (apiCall.includes('_')) {
       let splitAPI = apiCall.split('_')
-      messageObj.class = splitAPI[0].toString()
-      messageObj.api = splitAPI[1].toString()
+      messageObject.class = splitAPI[0].toString()
+      messageObject.api = splitAPI[1].toString()
+    } else {
+      messageObject.error.push('invalid apiCall property')
     }
-    return messageObj
+    return messageObject
   }
 
+  // Creates a MessageObject from a MessageRequest object
   public createMessageObject = (request: MessageRequest): MessageObject => {
-    const msgObj = this.splitAPICall(request.apiCall)
-    msgObj.method = request.method
-    msgObj.xml = request.xml
+    let msgObj = new MessageObject()
+    if (request.apiCall == null || request.method == null) {
+      msgObj.error.push('MessageRequest missing required properties')
+    } else {
+      msgObj = this.splitAPICall(request.apiCall)
+      msgObj.apiCall = request.apiCall
+      msgObj.method = request.method
+      msgObj.xml = request.xml
+    }
     return msgObj
   }
 
-  public createMessage = async (messageObj: MessageObject): Promise<string> => {
+  // Creates a XML formatted WSMAN message
+  public createMessage = async (messageObject: MessageObject): Promise<string> => {
     return new Promise(async (resolve, reject) => {
-      if (messageObj.api !== null && messageObj.class !== null && messageObj.method !== null) {
-        if (messageObj.method === Methods.PULL) {
-          const message = this.createPullMessage(messageObj)
+      if (messageObject.api !== null && messageObject.class !== null && messageObject.method !== null) {
+        if (messageObject.method === Methods.PULL) {
+          const message = this.createPullMessage(messageObject)
           resolve(message)
-        } else if (messageObj.method === Methods.PUT) {
-
+        } else if (messageObject.method === Methods.PUT) {
+          const message = this.createPutMessage(messageObject)
+          resolve(message)
         } else {
-          switch (messageObj.class) {
-            case 'AMT':
-              const amtWSMAN = new AMT.Messages()
-              resolve(amtWSMAN[messageObj.api](messageObj.method))
-              break
-            case 'IPS':
-              const ipsWSMAN = new IPS.Messages()
-              resolve(ipsWSMAN[messageObj.api](messageObj.method))
-              break
-            case 'CIM':
-              const cimWSMAN = new CIM.Messages()
-              resolve(cimWSMAN[messageObj.api](messageObj.method))
-              break
-            default:
-              reject(new Error('unsupported class'))
-              break
-          }
+          messageObject.classObject = this.setClassObject(messageObject)
+          resolve(messageObject.classObject[messageObject.api](messageObject.method))
         }
       }
     })
   }
 
-  private createPullMessage = async (messageObject: MessageObject): Promise<string> => {
-    const enumerationContextRequestObj = new MessageObject(messageObject.class, messageObject.api, Methods.ENUMERATE)
-    enumerationContextRequestObj.xml = await this.createMessage(enumerationContextRequestObj)
-    let enumerationResponse = await this.sendToSocket(enumerationContextRequestObj)
-    if (enumerationResponse.statusCode === 401) {
-      enumerationResponse = await this.handleRetry(enumerationContextRequestObj, enumerationResponse)
-    }
-    const xmlBody = parseBody(enumerationResponse)
-    const jsonBody = this.parseXML(xmlBody)
-    messageObject.enumerationContext = jsonBody.Envelope.Body.EnumerateResponse.EnumerationContext
+  // Creates an instance of a WSMAN-MESSAGES class to be used to create a WSMAN message
+  private setClassObject = (messageObject: MessageObject): any => {
     switch (messageObject.class) {
       case 'AMT':
-        const amtWSMAN = new AMT.Messages()
-        return (amtWSMAN[messageObject.api](messageObject.method, messageObject.enumerationContext))
+        return new AMT.Messages()
       case 'IPS':
-        const ipsWSMAN = new IPS.Messages()
-        return (ipsWSMAN[messageObject.api](messageObject.method, messageObject.enumerationContext))
+        return new IPS.Messages()
       case 'CIM':
-        const cimWSMAN = new CIM.Messages()
-        return (cimWSMAN[messageObject.api](messageObject.method, messageObject.enumerationContext))
-      default:
-        return 'unsupported class'
+        return new CIM.Messages()
     }
   }
 
+  private removeReadOnlyProperties = (apiCall: string, jsonObject): object => {
+    ClassMetaData[apiCall].readOnlyProperties.forEach(element => {
+      if (jsonObject.hasOwnProperty(element)) {
+        console.log(`removing:${element}`)
+        delete jsonObject[element]
+      }
+    })
+    return jsonObject
+  }
+
+  // Handles getting the enumerationContext from AMT in order to create a PULL message
+  private createPullMessage = async (messageObject: MessageObject): Promise<string> => {
+    const enumerationContextRequestObj = new MessageObject(messageObject.class, messageObject.api, Methods.ENUMERATE)
+    enumerationContextRequestObj.xml = await this.createMessage(enumerationContextRequestObj)
+    const enumerationResponse = await this.sendMessage(enumerationContextRequestObj)
+    messageObject.enumerationContext = enumerationResponse.jsonResponse.Envelope?.Body?.EnumerateResponse?.EnumerationContext
+    messageObject.classObject = this.setClassObject(messageObject)
+    return (messageObject.classObject[messageObject.api](messageObject.method, messageObject.enumerationContext))
+  }
+
+  private createPutMessage = async (messageObject: MessageObject): Promise<string> => {
+    const getRequestObj = new MessageObject(messageObject.class, messageObject.api, Methods.GET)
+    getRequestObj.xml = await this.createMessage(getRequestObj)
+    const getRequestResponse = await this.sendMessage(getRequestObj)
+    messageObject.classObject = this.setClassObject(messageObject)
+    const key = Object.keys(getRequestResponse.jsonResponse.Envelope.Body)[0]
+    const jsonResponse = this.removeReadOnlyProperties(messageObject.apiCall, getRequestResponse.jsonResponse.Envelope.Body[key])
+    console.log(JSON.stringify(jsonResponse))
+    if (ClassMetaData[messageObject.apiCall].putPosition === 1) {
+      return (messageObject.classObject[messageObject.api](messageObject.method, jsonResponse))
+    }
+    if (ClassMetaData[messageObject.apiCall].putPosition === 2) {
+      return (messageObject.classObject[messageObject.api](messageObject.method, null, jsonResponse))
+    } 
+  }
+
+  // Sends a message to AMT based on the MessageObject provided.  Handles auth retry.
   public sendMessage = async (messageObject: MessageObject): Promise<MessageObject> => {
     return new Promise(async (resolve, reject) => {
-      console.log(JSON.stringify(messageObject))
-      if (messageObject.api == null || messageObject.class == null || messageObject.method == null || messageObject.xml == null) { reject('missing required MessageObject properties') }
+      if (messageObject.api == null || messageObject.class == null || messageObject.method == null || messageObject.xml == null) {
+        messageObject.error.push('missing required MessageObject properties')
+        resolve(messageObject)
+      }
       let response = await this.sendToSocket(messageObject)
       if (response.statusCode === 401) {
         response = await this.handleRetry(messageObject, response)
@@ -140,6 +164,7 @@ export class MessageHandler {
     })
   }
 
+  // performs an auth retry based on a 401 response back from AMT
   private handleRetry = async (messageObject: MessageObject, response: HttpZResponseModel): Promise<HttpZResponseModel> => {
     const authHeaders = this.digestAuth.parseAuthorizationHeader(response)
     this.digestAuth.setDigestAuthHeaders(authHeaders)
@@ -147,7 +172,8 @@ export class MessageHandler {
     return retry
   }
 
-  public sendToSocket = async (messageObject: MessageObject): Promise<HttpZResponseModel> => {
+  // Sends a message to SocketHandler.  Adds proper headers to message
+  private sendToSocket = async (messageObject: MessageObject): Promise<HttpZResponseModel> => {
     const message = this.digestAuth.createMessage(messageObject.xml, this.digestAuth.getDigestAuthHeaders())
     Logger(LogType.DEBUG, 'MESSAGEHANDLER', `SENDING:\r\n${message}`)
     const response = await this.socketHandler.write(message)
@@ -155,6 +181,7 @@ export class MessageHandler {
     return response
   }
 
+  // Properly handles numbers at the beginning of ElementName or InstanceID
   private myParseNumbers = (value: string, name: string): any => {
     if (name === 'ElementName' || name === 'InstanceID') {
       if (value.length > 1 && value.charAt(0) === '0') {
@@ -164,6 +191,7 @@ export class MessageHandler {
     return xml2js.processors.parseNumbers(value, name)
   }
 
+  // Parses the XML body from the response message to return just the XML formatted WSMAN message
   public parseXML = (xmlBody: string): any => {
     let wsmanResponse: string
     const xmlDecoded: string = Buffer.from(xmlBody, 'binary').toString('utf8')

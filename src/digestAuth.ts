@@ -72,15 +72,19 @@ export class DigestAuth {
   }
 
   public parseAuthorizationHeader = (message: HttpZResponseModel): DigestAuthHeaders => {
-    const found = message.headers?.find(item => item.name === 'Www-Authenticate')
-    if (found != null) {
-      return this.parseAuthenticateResponseHeader(found.value)
+    if (this.digestAuthHeaders.qop != null) {
+      return this.digestAuthHeaders
+    } else {
+      const found = message.headers?.find(item => item.name === 'Www-Authenticate')
+      if (found != null) {
+        return this.parseAuthenticateResponseHeader(found.value)
+      }
     }
   }
 
   public createMessage = (xml: string, digestAuthHeaders?: DigestAuthHeaders): string => {
     if (xml == null) { return null }
-    const url  = '/wsman'
+    const url = '/wsman'
     const action = 'POST'
     let message: string = `${action} ${url} HTTP/1.1\r\n`
     if (digestAuthHeaders.qop != null) {
@@ -99,7 +103,7 @@ export class DigestAuth {
     this.setDigestAuthHeaders(digestAuthHeaders)
     let msg = ''
     let responseDigest = null
-    const url  = '/wsman'
+    const url = '/wsman'
     const action = 'POST'
     // console nonce should be a unique opaque quoted string
     this.digestAuthHeaders.consoleNonce = Math.random().toString(36).substring(7)

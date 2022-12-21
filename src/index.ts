@@ -62,12 +62,18 @@ app.post('/connect', async function (req, res) {
 app.post('/wsman', async function (req, res) {
   if (req.body) {
     const messageHandler = new MessageHandler(socketHandler, digestAuth)
-    console.log(req.body)
-    const messageObj: MessageObject = messageHandler.createMessageObject(req.body)
-    messageObj.xml = await messageHandler.createMessage(messageObj)
-    res.status(200).send(messageObj.xml)
+    const messageObject: any = messageHandler.createMessageObject(req.body)
+    if (messageObject.error?.length > 0) {
+      messageObject.error.forEach(element => {
+        Logger(LogType.ERROR, 'INDEX', element)
+      });
+      res.status(500).send(messageObject)
+    } else {
+      messageObject.xml = await messageHandler.createMessage(messageObject)
+      res.status(200).send(messageObject.xml)
+    }
   } else {
-    res.status(404).send('Missing body')
+    res.status(500).send('Missing body')
   }
 })
 
@@ -79,12 +85,19 @@ app.post('/submit', async function (req, res) {
   }
   const request: MessageRequest = req.body
   const messageHandler = new MessageHandler(socketHandler, digestAuth)
-  const msgObj = messageHandler.createMessageObject(request)
-  const response: MessageObject = await messageHandler.sendMessage(msgObj)
-  const httpResponse = new HttpResponse()
-  httpResponse.xmlBody = response.xmlResponse
-  httpResponse.jsonBody = response.jsonResponse
-  res.status(response.statusCode).send(httpResponse)
+  const messageObject = messageHandler.createMessageObject(request)
+  if (messageObject.error?.length > 0) {
+    messageObject.error.forEach(element => {
+      Logger(LogType.ERROR, 'INDEX', element)
+    })
+    res.status(500).send(messageObject)
+  } else {
+    const response: MessageObject = await messageHandler.sendMessage(messageObject)
+    const httpResponse = new HttpResponse()
+    httpResponse.xmlBody = response.xmlResponse
+    httpResponse.jsonBody = response.jsonResponse
+    res.status(response.statusCode).send(httpResponse)
+  }
 })
 
 app.delete('/disconnect', function (req, res) {

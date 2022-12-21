@@ -152,7 +152,7 @@
       methodList.removeChild(options[i])
     }
     methodList.options[methodList.options.length] = new Option('Select Method', 'default', true, true)
-    globalAPICalls[apiCall].Methods.forEach(element => {
+    globalAPICalls[apiCall].methods.forEach(element => {
       methodList.options[methodList.options.length] = new Option(element, element)
     })
   }
