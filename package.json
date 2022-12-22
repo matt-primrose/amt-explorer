@@ -33,7 +33,7 @@
     "typescript": "^4.8.4"
   },
   "dependencies": {
-    "@open-amt-cloud-toolkit/wsman-messages": "^3.0.4",
+    "@open-amt-cloud-toolkit/wsman-messages": "^3.2.0",
     "body-parser": "^1.20.1",
     "digest-fetch": "^2.0.1",
     "express": "^4.18.2",

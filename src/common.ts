@@ -53,7 +53,6 @@ export const ClassMetaData = {
   },
   AMT_GeneralSettings: {
     methods: [AMT.Methods.GET, AMT.Methods.PUT],
-    readOnlyProperties: ['NetworkInterfaceEnabled', 'DigestRealm', 'PrivacyLevel', 'PowerSource'],
     enumerationContextPosition: null,
     putPosition: 1,
     selectorPosition: null
@@ -269,6 +268,12 @@ export const ClassMetaData = {
     putPosition: null,
     selectorPosition: null
   },
+  IPS_IEEE8021xCredentialContext: {
+    methods: [IPS.Methods.PULL, IPS.Methods.ENUMERATE],
+    enumerationContextPosition: 1,
+    putPosition: null,
+    selectorPosition: null
+  },
   IPS_IEEE8021xSettings: {
     methods: [IPS.Methods.PULL, IPS.Methods.ENUMERATE, IPS.Methods.PUT, IPS.Methods.SET_CERTIFICATES],
     enumerationContextPosition: 1,
@@ -280,17 +285,21 @@ export const ClassMetaData = {
     enumerationContextPosition: null,
     putPosition: 2,
     selectorPosition: null
-  },
-  IEEE8021xCredentialContext: {
-    methods: [IPS.Methods.PULL, IPS.Methods.ENUMERATE],
-    enumerationContextPosition: 1,
-    putPosition: null,
-    selectorPosition: null
   }
 }
 
+// Properly handles numbers at the beginning of ElementName or InstanceID
+export const myParseNumbers = (value: string, name: string): any => {
+  if (name === 'ElementName' || name === 'InstanceID') {
+    if (value.length > 1 && value.charAt(0) === '0') {
+      return value
+    }
+  }
+  return xml2js.processors.parseNumbers(value, name)
+}
+
 export const stripPrefix = xml2js.processors.stripPrefix
-export const parser = new xml2js.Parser({ ignoreAttrs: true, mergeAttrs: false, explicitArray: false, tagNameProcessors: [stripPrefix], valueProcessors: [xml2js.processors.parseNumbers, xml2js.processors.parseBooleans] })
+export const parser = new xml2js.Parser({ ignoreAttrs: true, mergeAttrs: false, explicitArray: false, tagNameProcessors: [stripPrefix], valueProcessors: [myParseNumbers, xml2js.processors.parseBooleans] })
 export class error {
   status: number
   error: string
@@ -299,6 +308,7 @@ export class error {
     this.error = error
   }
 }
+
 export const parseBody = (message: HttpZResponseModel): string => {
   let xmlBody: string = ''
   // parse the body until its length is greater than 5, because body ends with '0\r\n\r\n'

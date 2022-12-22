@@ -5,11 +5,10 @@
 
 import { AMT, IPS, CIM } from '@open-amt-cloud-toolkit/wsman-messages'
 import { Methods } from '@open-amt-cloud-toolkit/wsman-messages/amt'
-import { ClassMetaData, Logger, LogType, parseBody } from './common'
+import { ClassMetaData, Logger, LogType, parseBody, parseXML } from './common'
 import { DigestAuth } from './digestAuth'
 import { SocketHandler } from './socketHandler'
 import { HttpZResponseModel } from 'http-z'
-import * as xml2js from 'xml2js'
 
 // Object holder for MessageHandler class.  Holds all of the relevant information for the life cycle of a message
 export class MessageObject {
@@ -42,15 +41,11 @@ export class MessageRequest {
 
 export class MessageHandler {
   response: any
-  stripPrefix: any
-  parser: any
   socketHandler: SocketHandler
   digestAuth: DigestAuth
   constructor(socketHandler: SocketHandler, digestAuth: DigestAuth) {
     this.socketHandler = socketHandler
     this.digestAuth = digestAuth
-    this.stripPrefix = xml2js.processors.stripPrefix
-    this.parser = new xml2js.Parser({ ignoreAttrs: true, mergeAttrs: false, explicitArray: false, tagNameProcessors: [this.stripPrefix], valueProcessors: [this.myParseNumbers, xml2js.processors.parseBooleans] })
   }
 
   // Splits the apiCall coming in on the apiCall property of a MessageRequest object
@@ -121,19 +116,28 @@ export class MessageHandler {
   }
 
   private createPutMessage = async (messageObject: MessageObject): Promise<string> => {
-    const getRequestObj = new MessageObject(messageObject.class, messageObject.api, Methods.GET)
-    getRequestObj.xml = await this.createMessage(getRequestObj)
-    const getRequestResponse = await this.sendMessage(getRequestObj)
+    let requestObject, requestResponse, key, jsonResponse
+    if (ClassMetaData[messageObject.apiCall].methods.includes('Get')) {
+      requestObject = new MessageObject(messageObject.class, messageObject.api, Methods.GET)
+      requestObject.xml = await this.createMessage(requestObject)
+      requestResponse = await this.sendMessage(requestObject)
+      key = Object.keys(requestResponse.jsonResponse.Envelope?.Body)[0]
+      jsonResponse = requestResponse.jsonResponse.Envelope.Body[key]
+    } else {
+      requestObject = new MessageObject(messageObject.class, messageObject.api, Methods.PULL)
+      requestObject.xml = await this.createMessage(requestObject)
+      requestResponse = await this.sendMessage(requestObject)
+      key = Object.keys(requestResponse.jsonResponse.Envelope?.Body?.PullResponse?.Items)[0]
+      jsonResponse = requestResponse.jsonResponse.Envelope.Body.PullResponse.Items[key]
+      console.log(JSON.stringify(jsonResponse))
+    }
     messageObject.classObject = this.setClassObject(messageObject)
-    const key = Object.keys(getRequestResponse.jsonResponse.Envelope.Body)[0]
-    const jsonResponse = getRequestResponse.jsonResponse.Envelope.Body[key]
-    console.log(JSON.stringify(jsonResponse))
     if (ClassMetaData[messageObject.apiCall].putPosition === 1) {
       return (messageObject.classObject[messageObject.api](messageObject.method, jsonResponse))
     }
     if (ClassMetaData[messageObject.apiCall].putPosition === 2) {
       return (messageObject.classObject[messageObject.api](messageObject.method, null, jsonResponse))
-    } 
+    }
   }
 
   // Sends a message to AMT based on the MessageObject provided.  Handles auth retry.
@@ -149,7 +153,7 @@ export class MessageHandler {
       }
       messageObject.xmlResponse = parseBody(response)
       messageObject.statusCode = response.statusCode
-      messageObject.jsonResponse = this.parseXML(messageObject.xmlResponse)
+      messageObject.jsonResponse = parseXML(messageObject.xmlResponse)
       resolve(messageObject)
     })
   }
@@ -169,30 +173,5 @@ export class MessageHandler {
     const response = await this.socketHandler.write(message)
     Logger(LogType.DEBUG, 'MESSAGEHANDLER', `RESPONSE:\r\n${JSON.stringify(response)}`)
     return response
-  }
-
-  // Properly handles numbers at the beginning of ElementName or InstanceID
-  private myParseNumbers = (value: string, name: string): any => {
-    if (name === 'ElementName' || name === 'InstanceID') {
-      if (value.length > 1 && value.charAt(0) === '0') {
-        return value
-      }
-    }
-    return xml2js.processors.parseNumbers(value, name)
-  }
-
-  // Parses the XML body from the response message to return just the XML formatted WSMAN message
-  public parseXML = (xmlBody: string): any => {
-    let wsmanResponse: string
-    const xmlDecoded: string = Buffer.from(xmlBody, 'binary').toString('utf8')
-    this.parser.parseString(xmlDecoded, (err, result) => {
-      if (err) {
-        Logger(LogType.ERROR, 'MESSAGEHANDLER', `Failed to parse XML:${err}`)
-        wsmanResponse = null
-      } else {
-        wsmanResponse = result
-      }
-    })
-    return wsmanResponse
   }
 }
