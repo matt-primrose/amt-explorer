@@ -116,21 +116,15 @@ export class MessageHandler {
   }
 
   private createPutMessage = async (messageObject: MessageObject): Promise<string> => {
-    let requestObject, requestResponse, key, jsonResponse
+    let requestObject, requestResponse, jsonResponse
     if (ClassMetaData[messageObject.apiCall].methods.includes('Get')) {
       requestObject = new MessageObject(messageObject.class, messageObject.api, Methods.GET)
-      requestObject.xml = await this.createMessage(requestObject)
-      requestResponse = await this.sendMessage(requestObject)
-      key = Object.keys(requestResponse.jsonResponse.Envelope?.Body)[0]
-      jsonResponse = requestResponse.jsonResponse.Envelope.Body[key]
-    } else {
+    } else if (ClassMetaData[messageObject.apiCall].methods.includes('Pull')) {
       requestObject = new MessageObject(messageObject.class, messageObject.api, Methods.PULL)
-      requestObject.xml = await this.createMessage(requestObject)
-      requestResponse = await this.sendMessage(requestObject)
-      key = Object.keys(requestResponse.jsonResponse.Envelope?.Body?.PullResponse?.Items)[0]
-      jsonResponse = requestResponse.jsonResponse.Envelope.Body.PullResponse.Items[key]
-      console.log(JSON.stringify(jsonResponse))
     }
+    requestObject.xml = await this.createMessage(requestObject)
+    requestResponse = await this.sendMessage(requestObject)
+    jsonResponse = this.getDataFromJSONResponse(requestResponse)
     messageObject.classObject = this.setClassObject(messageObject)
     if (ClassMetaData[messageObject.apiCall].putPosition === 1) {
       return (messageObject.classObject[messageObject.api](messageObject.method, jsonResponse))
@@ -156,6 +150,22 @@ export class MessageHandler {
       messageObject.jsonResponse = parseXML(messageObject.xmlResponse)
       resolve(messageObject)
     })
+  }
+
+  private getDataFromJSONResponse = (messageObject: MessageObject): object => {
+    let keys: string[], jsonResponse: object
+    if (messageObject.xmlResponse.includes('PullResponse')) {
+      keys = Object.keys(messageObject.jsonResponse.Envelope?.Body?.PullResponse?.Items)
+      keys.forEach(element => {
+        jsonResponse = messageObject.jsonResponse.Envelope?.Body?.PullResponse?.Items[element][0]
+      })
+    } else if (messageObject.xmlResponse.includes('GetResponse')) {
+      keys = Object.keys(messageObject.jsonResponse.Envelope?.Body)
+      keys.forEach(element => {
+        jsonResponse = messageObject.jsonResponse.Envelope?.Body[element]
+      })
+    }
+    return jsonResponse
   }
 
   // performs an auth retry based on a 401 response back from AMT

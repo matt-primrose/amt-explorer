@@ -9,7 +9,6 @@ import { ClassMetaData, Logger, LogType, parseBody } from './common'
 import { MessageHandler, MessageObject, MessageRequest } from './messageHandler'
 import { DigestAuth } from './digestAuth'
 import { SocketHandler, SocketParameters } from './socketHandler'
-import * as xml2js from 'xml2js'
 
 export const logLevel = 'debug'
 const app = express()
