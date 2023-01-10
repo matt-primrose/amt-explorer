@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "jest --detectOpenHandles --forceExit --coverage",
-    "start": "tsc && node ./dist/index.js"
+    "start": "tsc && node ./dist/index.js",
+    "compile": "tsc"
   },
   "repository": {
     "type": "git",
@@ -33,7 +34,7 @@
     "typescript": "^4.8.4"
   },
   "dependencies": {
-    "@open-amt-cloud-toolkit/wsman-messages": "^3.2.0",
+    "@open-amt-cloud-toolkit/wsman-messages": "^4.0.0",
     "body-parser": "^1.20.1",
     "digest-fetch": "^2.0.1",
     "express": "^4.18.2",

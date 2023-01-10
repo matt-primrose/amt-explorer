@@ -12,7 +12,7 @@ import { SocketHandler, SocketParameters } from './socketHandler'
 
 export const logLevel = 'debug'
 const app = express()
-const serverPort = 3000
+const serverPort = process.env.PORT ?? 3001
 let socketHandler: SocketHandler
 let digestAuth: DigestAuth
 let socketParameters: SocketParameters
@@ -31,8 +31,8 @@ class HttpResponse {
 app.use(express.static('public'))
 app.use(bodyParser.json({ type: 'application/json' }))
 
-app.get('/index.htm', function (req, res) {
-  res.status(200).sendFile(__dirname + "/index.htm")
+app.get('/', function (req, res) {
+  res.sendFile('index.html')
 })
 
 app.get('/classes', function (req, res) {
@@ -108,5 +108,5 @@ app.delete('/disconnect', function (req, res) {
 })
 
 app.listen(serverPort, () => {
-  Logger(LogType.INFO, 'AMT Explorer running at', ` http://localhost:3000/index.htm`)
+  Logger(LogType.INFO, 'AMT Explorer running at', ` http://localhost:${serverPort}`)
 })

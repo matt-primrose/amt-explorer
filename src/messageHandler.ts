@@ -43,6 +43,9 @@ export class MessageHandler {
   response: any
   socketHandler: SocketHandler
   digestAuth: DigestAuth
+  amt = new AMT.Messages()
+  cim = new CIM.Messages()
+  ips = new IPS.Messages()
   constructor(socketHandler: SocketHandler, digestAuth: DigestAuth) {
     this.socketHandler = socketHandler
     this.digestAuth = digestAuth
@@ -79,15 +82,46 @@ export class MessageHandler {
   public createMessage = async (messageObject: MessageObject): Promise<string> => {
     return new Promise(async (resolve, reject) => {
       if (messageObject.api !== null && messageObject.class !== null && messageObject.method !== null) {
-        if (messageObject.method === Methods.PULL) {
-          const message = this.createPullMessage(messageObject)
-          resolve(message)
-        } else if (messageObject.method === Methods.PUT) {
-          const message = this.createPutMessage(messageObject)
-          resolve(message)
-        } else {
-          messageObject.classObject = this.setClassObject(messageObject)
-          resolve(messageObject.classObject[messageObject.api](messageObject.method))
+        messageObject.classObject = this.setClassObject(messageObject)
+        switch (messageObject.method) {
+          case CIM.Methods.PULL:
+            resolve(this.createPullMessage(messageObject))
+            break
+          case CIM.Methods.PUT:
+            resolve(this.createPutMessage(messageObject))
+            break
+          case CIM.Methods.GET:
+            resolve(messageObject.classObject[messageObject.api].Get())
+            break
+          case CIM.Methods.ENUMERATE:
+            resolve(messageObject.classObject[messageObject.api].Enumerate())
+            break
+          case AMT.Methods.READ_RECORDS:
+            resolve(this.amt.AuditLog.ReadRecords())
+            break
+          case AMT.Methods.GET_RECORDS:
+            resolve(this.amt.MessageLog.GetRecords())
+            break
+          case AMT.Methods.POSITION_TO_FIRST_RECORD:
+            resolve(this.amt.MessageLog.PositionToFirstRecord())
+            break
+          case AMT.Methods.GET_UUID:
+            resolve(this.amt.SetupAndConfigurationService.GetUuid())
+            break
+          case AMT.Methods.COMMIT_CHANGES:
+            resolve(this.amt.SetupAndConfigurationService.CommitChanges())
+            break
+          case AMT.Methods.GET_LOW_ACCURACY_TIME_SYNCH:
+            resolve(this.amt.TimeSynchronizationService.GetLowAccuracyTimeSynch())
+            break
+          case IPS.Methods.START_OPT_IN:
+            resolve(this.ips.OptInService.StartOptIn())
+            break
+          case IPS.Methods.CANCEL_OPT_IN:
+            resolve(this.ips.OptInService.CancelOptIn())
+            break
+          default:
+            throw new Error('unsupported method')
         }
       }
     })
@@ -112,25 +146,20 @@ export class MessageHandler {
     const enumerationResponse = await this.sendMessage(enumerationContextRequestObj)
     messageObject.enumerationContext = enumerationResponse.jsonResponse.Envelope?.Body?.EnumerateResponse?.EnumerationContext
     messageObject.classObject = this.setClassObject(messageObject)
-    return (messageObject.classObject[messageObject.api](messageObject.method, messageObject.enumerationContext))
+    return (messageObject.classObject[messageObject.api].Pull(messageObject.enumerationContext))
   }
 
   private createPutMessage = async (messageObject: MessageObject): Promise<string> => {
-    let requestObject, requestResponse, jsonResponse
-    if (ClassMetaData[messageObject.apiCall].methods.includes('Get')) {
-      requestObject = new MessageObject(messageObject.class, messageObject.api, Methods.GET)
-    } else if (ClassMetaData[messageObject.apiCall].methods.includes('Pull')) {
-      requestObject = new MessageObject(messageObject.class, messageObject.api, Methods.PULL)
-    }
+    const requestObject = new MessageObject(messageObject.class, messageObject.api, Methods.GET)
     requestObject.xml = await this.createMessage(requestObject)
-    requestResponse = await this.sendMessage(requestObject)
-    jsonResponse = this.getDataFromJSONResponse(requestResponse)
+    const requestResponse = await this.sendMessage(requestObject)
+    const jsonResponse = this.getDataFromJSONResponse(requestResponse)
     messageObject.classObject = this.setClassObject(messageObject)
     if (ClassMetaData[messageObject.apiCall].putPosition === 1) {
-      return (messageObject.classObject[messageObject.api](messageObject.method, jsonResponse))
+      return (messageObject.classObject[messageObject.api].Put(jsonResponse))
     }
     if (ClassMetaData[messageObject.apiCall].putPosition === 2) {
-      return (messageObject.classObject[messageObject.api](messageObject.method, null, jsonResponse))
+      return (messageObject.classObject[messageObject.api].Put(null, jsonResponse))
     }
   }
 
