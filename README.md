@@ -14,7 +14,7 @@ npm run start
 Open browser and navigate to address in terminal
 
 ```bash
-AMT Explorer running at: http://localhost:3000/index.htm
+AMT Explorer running at: http://localhost:3001/
 ```
 
 <p align="center">
