@@ -10,293 +10,148 @@ import { logLevel } from "."
 
 export const ClassMetaData = {
   AMT_AlarmClockService: {
-    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: 2,
-    selectorPosition: null
+    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL]
   },
   AMT_AuditLog: {
-    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL, AMT.Methods.READ_RECORDS],
-    enumerationContextPosition: 1,
-    putPosition: null,
-    selectorPosition: null
+    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL, AMT.Methods.READ_RECORDS]
   },
   AMT_AuthorizationService: {
-    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: null,
-    selectorPosition: null
+    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL]
   },
   AMT_BootCapabilities: {
-    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: null,
-    selectorPosition: null
+    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL]
   },
   AMT_BootSettingData: {
-    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: 2,
-    selectorPosition: null
+    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL, AMT.Methods.PUT]
   },
   AMT_EnvironmentDetectionSettingData: {
-    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: 2,
-    selectorPosition: null
+    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL, AMT.Methods.PUT]
   },
   AMT_EthernetPortSettings: {
-    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: 2,
-    selectorPosition: null
+    methods: [AMT.Methods.ENUMERATE, AMT.Methods.PULL]
   },
   AMT_GeneralSettings: {
-    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: 2,
-    selectorPosition: null
+    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL, AMT.Methods.PUT]
   },
   AMT_IEEE8021xCredentialContext: {
-    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: null,
-    selectorPosition: null
+    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL]
   },
   AMT_IEEE8021xProfile: {
-    methods: [AMT.Methods.GET, AMT.Methods.ENUMERATE, AMT.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: 2,
-    selectorPosition: null
+    methods: [AMT.Methods.GET, AMT.Methods.ENUMERATE, AMT.Methods.PULL, AMT.Methods.PUT]
   },
   AMT_ManagementPresenceRemoteSAP: {
-    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: null,
-    selectorPosition: 2
+    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL]
   },
   AMT_MessageLog: {
-    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.GET_RECORDS, AMT.Methods.POSITION_TO_FIRST_RECORD, AMT.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: null,
-    selectorPosition: null
+    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.GET_RECORDS, AMT.Methods.POSITION_TO_FIRST_RECORD, AMT.Methods.PULL]
   },
   AMT_PublicKeyCertificate: {
-    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: null,
-    selectorPosition: null
+    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL]
   },
   AMT_PublicKeyManagementService: {
-    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: null,
-    selectorPosition: null
+    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL]
   },
   AMT_PublicPrivateKeyPair: {
-    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: null,
-    selectorPosition: null
+    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL]
   },
   AMT_RedirectionService: {
-    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: 2,
-    selectorPosition: null
+    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL, AMT.Methods.PUT]
   },
   AMT_RemoteAccessPolicyAppliesToMPS: {
-    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: 2,
-    selectorPosition: null
+    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL, AMT.Methods.PUT]
   },
   AMT_RemoteAccessPolicyRule: {
-    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: null,
-    selectorPosition: 2
+    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL]
   },
   AMT_RemoteAccessService: {
-    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: null,
-    selectorPosition: null
+    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL]
   },
   AMT_SetupAndConfigurationService: {
-    methods: [AMT.Methods.COMMIT_CHANGES, AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.GET_UUID, AMT.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: null,
-    selectorPosition: null
+    methods: [AMT.Methods.COMMIT_CHANGES, AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.GET_UUID, AMT.Methods.PULL]
   },
   AMT_TimeSynchronizationService: {
-    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.GET_LOW_ACCURACY_TIME_SYNCH, AMT.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: null,
-    selectorPosition: null
+    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.GET_LOW_ACCURACY_TIME_SYNCH, AMT.Methods.PULL]
   },
   AMT_TLSCredentialContext: {
-    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: 2,
-    selectorPosition: 3
+    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL]
   },
   AMT_TLSSettingData: {
-    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: 2,
-    selectorPosition: null
+    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL]
   },
   AMT_UserInitiatedConnectionService: {
-    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: null,
-    selectorPosition: null,
-    RequestedStatePosition: 2
+    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL]
   },
   AMT_WiFiPortConfigurationService: {
-    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: 2,
-    selectorPosition: 3
+    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL, AMT.Methods.PUT]
   },
   CIM_BIOSElement: {
-    methods: [CIM.Methods.ENUMERATE, CIM.Methods.GET, CIM.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: null,
-    selectorPosition: null
+    methods: [CIM.Methods.ENUMERATE, CIM.Methods.GET, CIM.Methods.PULL]
   },
   CIM_BootService: {
-    methods: [CIM.Methods.ENUMERATE, CIM.Methods.GET, CIM.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: null,
-    selectorPosition: null
+    methods: [CIM.Methods.ENUMERATE, CIM.Methods.GET, CIM.Methods.PULL]
   },
   CIM_Card: {
-    methods: [CIM.Methods.ENUMERATE, CIM.Methods.GET, CIM.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: null,
-    selectorPosition: null
+    methods: [CIM.Methods.ENUMERATE, CIM.Methods.GET, CIM.Methods.PULL]
   },
   CIM_Chassis: {
-    methods: [CIM.Methods.ENUMERATE, CIM.Methods.GET, CIM.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: null,
-    selectorPosition: null
+    methods: [CIM.Methods.ENUMERATE, CIM.Methods.GET, CIM.Methods.PULL]
   },
   CIM_Chip: {
-    methods: [CIM.Methods.ENUMERATE, CIM.Methods.GET, CIM.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: null,
-    selectorPosition: null
+    methods: [CIM.Methods.ENUMERATE, CIM.Methods.GET, CIM.Methods.PULL]
   },
   CIM_ComputerSystemPackage: {
-    methods: [CIM.Methods.ENUMERATE, CIM.Methods.GET, CIM.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: null,
-    selectorPosition: null
+    methods: [CIM.Methods.ENUMERATE, CIM.Methods.GET, CIM.Methods.PULL]
   },
   CIM_IEEE8021xSettings: {
-    methods: [CIM.Methods.ENUMERATE, CIM.Methods.GET, CIM.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: null,
-    selectorPosition: null
+    methods: [CIM.Methods.ENUMERATE, CIM.Methods.GET, CIM.Methods.PULL]
   },
   CIM_KVMRedirectionSAP: {
-    methods: [CIM.Methods.ENUMERATE, CIM.Methods.GET, CIM.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: null,
-    selectorPosition: null
+    methods: [CIM.Methods.ENUMERATE, CIM.Methods.GET, CIM.Methods.PULL]
   },
   CIM_MediaAccessDevice: {
-    methods: [CIM.Methods.ENUMERATE, CIM.Methods.GET, CIM.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: null,
-    selectorPosition: null
+    methods: [CIM.Methods.ENUMERATE, CIM.Methods.GET, CIM.Methods.PULL]
   },
   CIM_PhysicalMemory: {
-    methods: [CIM.Methods.ENUMERATE, CIM.Methods.GET, CIM.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: null,
-    selectorPosition: null
+    methods: [CIM.Methods.ENUMERATE, CIM.Methods.GET, CIM.Methods.PULL]
   },
   CIM_PhysicalPackage: {
-    methods: [CIM.Methods.ENUMERATE, CIM.Methods.GET, CIM.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: null,
-    selectorPosition: null
+    methods: [CIM.Methods.ENUMERATE, CIM.Methods.GET, CIM.Methods.PULL]
   },
   CIM_PowerManagementService: {
-    methods: [CIM.Methods.ENUMERATE, CIM.Methods.GET, CIM.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: null,
-    selectorPosition: null
+    methods: [CIM.Methods.ENUMERATE, CIM.Methods.GET, CIM.Methods.PULL]
   },
   CIM_Processor: {
-    methods: [CIM.Methods.ENUMERATE, CIM.Methods.GET, CIM.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: null,
-    selectorPosition: null
+    methods: [CIM.Methods.ENUMERATE, CIM.Methods.GET, CIM.Methods.PULL]
   },
   CIM_ServiceAvailableToElement: {
-    methods: [CIM.Methods.ENUMERATE, CIM.Methods.GET, CIM.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: null,
-    selectorPosition: null
+    methods: [CIM.Methods.ENUMERATE, CIM.Methods.GET, CIM.Methods.PULL]
   },
   CIM_SoftwareIdentity: {
-    methods: [CIM.Methods.ENUMERATE, CIM.Methods.GET, CIM.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: null,
-    selectorPosition: null
+    methods: [CIM.Methods.ENUMERATE, CIM.Methods.GET, CIM.Methods.PULL]
   },
   CIM_SystemPackaging: {
-    methods: [CIM.Methods.ENUMERATE, CIM.Methods.GET, CIM.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: null,
-    selectorPosition: null
+    methods: [CIM.Methods.ENUMERATE, CIM.Methods.GET, CIM.Methods.PULL]
   },
   CIM_WiFiEndpointSettings: {
-    methods: [CIM.Methods.ENUMERATE, CIM.Methods.GET, CIM.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: null,
-    selectorPosition: 2
+    methods: [CIM.Methods.ENUMERATE, CIM.Methods.GET, CIM.Methods.PULL]
   },
   CIM_WiFiPort: {
-    methods: [CIM.Methods.ENUMERATE, CIM.Methods.GET, CIM.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: null,
-    selectorPosition: null
+    methods: [CIM.Methods.ENUMERATE, CIM.Methods.GET, CIM.Methods.PULL]
   },
   IPS_AlarmClockOccurrence: {
-    methods: [IPS.Methods.ENUMERATE, IPS.Methods.GET, IPS.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: null,
-    selectorPosition: 2
+    methods: [IPS.Methods.ENUMERATE, IPS.Methods.GET, IPS.Methods.PULL]
   },
   IPS_HostBasedSetupService: {
-    methods: [IPS.Methods.ENUMERATE, IPS.Methods.GET, IPS.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: null,
-    selectorPosition: null
+    methods: [IPS.Methods.ENUMERATE, IPS.Methods.GET, IPS.Methods.PULL]
   },
   IPS_IEEE8021xCredentialContext: {
-    methods: [IPS.Methods.ENUMERATE, IPS.Methods.GET, IPS.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: null,
-    selectorPosition: null
+    methods: [IPS.Methods.ENUMERATE, IPS.Methods.GET, IPS.Methods.PULL]
   },
   IPS_IEEE8021xSettings: {
-    methods: [IPS.Methods.ENUMERATE, IPS.Methods.GET, IPS.Methods.PULL],
-    enumerationContextPosition: 1,
-    putPosition: 2,
-    selectorPosition: null
+    methods: [IPS.Methods.ENUMERATE, IPS.Methods.GET, IPS.Methods.PULL, IPS.Methods.PUT]
   },
   IPS_OptInService: {
-    methods: [IPS.Methods.CANCEL_OPT_IN, IPS.Methods.ENUMERATE, IPS.Methods.GET, IPS.Methods.PULL, IPS.Methods.START_OPT_IN],
-    enumerationContextPosition: 1,
-    putPosition: 2,
-    selectorPosition: null
+    methods: [IPS.Methods.CANCEL_OPT_IN, IPS.Methods.ENUMERATE, IPS.Methods.GET, IPS.Methods.PULL, IPS.Methods.PUT, IPS.Methods.START_OPT_IN]
   }
 }
 

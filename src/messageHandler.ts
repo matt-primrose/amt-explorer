@@ -5,7 +5,7 @@
 
 import { AMT, IPS, CIM } from '@open-amt-cloud-toolkit/wsman-messages'
 import { Methods } from '@open-amt-cloud-toolkit/wsman-messages/amt'
-import { ClassMetaData, Logger, LogType, parseBody, parseXML } from './common'
+import { Logger, LogType, parseBody, parseXML } from './common'
 import { DigestAuth } from './digestAuth'
 import { SocketHandler } from './socketHandler'
 import { HttpZResponseModel } from 'http-z'
@@ -141,26 +141,23 @@ export class MessageHandler {
 
   // Handles getting the enumerationContext from AMT in order to create a PULL message
   private createPullMessage = async (messageObject: MessageObject): Promise<string> => {
-    const enumerationContextRequestObj = new MessageObject(messageObject.class, messageObject.api, Methods.ENUMERATE)
-    enumerationContextRequestObj.xml = await this.createMessage(enumerationContextRequestObj)
-    const enumerationResponse = await this.sendMessage(enumerationContextRequestObj)
-    messageObject.enumerationContext = enumerationResponse.jsonResponse.Envelope?.Body?.EnumerateResponse?.EnumerationContext
+    const requestResponse = await this.getPreMessage(Methods.ENUMERATE, messageObject)
+    messageObject.enumerationContext = requestResponse.jsonResponse.Envelope?.Body?.EnumerateResponse?.EnumerationContext
     messageObject.classObject = this.setClassObject(messageObject)
     return (messageObject.classObject[messageObject.api].Pull(messageObject.enumerationContext))
   }
 
   private createPutMessage = async (messageObject: MessageObject): Promise<string> => {
-    const requestObject = new MessageObject(messageObject.class, messageObject.api, Methods.GET)
-    requestObject.xml = await this.createMessage(requestObject)
-    const requestResponse = await this.sendMessage(requestObject)
+    const requestResponse = await this.getPreMessage(Methods.GET, messageObject)
     const jsonResponse = this.getDataFromJSONResponse(requestResponse)
     messageObject.classObject = this.setClassObject(messageObject)
-    if (ClassMetaData[messageObject.apiCall].putPosition === 1) {
-      return (messageObject.classObject[messageObject.api].Put(jsonResponse))
-    }
-    if (ClassMetaData[messageObject.apiCall].putPosition === 2) {
-      return (messageObject.classObject[messageObject.api].Put(null, jsonResponse))
-    }
+    return (messageObject.classObject[messageObject.api].Put(jsonResponse))
+  }
+
+  private getPreMessage = async (method: Methods, messageObject: MessageObject): Promise<MessageObject> => {
+    const requestObject = new MessageObject(messageObject.class, messageObject.api, method)
+    requestObject.xml = await this.createMessage(requestObject)
+    return await this.sendMessage(requestObject)
   }
 
   // Sends a message to AMT based on the MessageObject provided.  Handles auth retry.
@@ -177,9 +174,55 @@ export class MessageHandler {
       messageObject.xmlResponse = parseBody(response)
       messageObject.statusCode = response.statusCode
       messageObject.jsonResponse = parseXML(messageObject.xmlResponse)
+      if (messageObject.jsonResponse.Envelope.Body.GetUuid_OUTPUT?.UUID) {
+        messageObject.jsonResponse.Envelope.Body.GetUuid_OUTPUT.UUID = this.convertToGUID(messageObject.jsonResponse.Envelope.Body.GetUuid_OUTPUT.UUID)
+        console.log(messageObject.jsonResponse.Envelope.Body.GetUuid_OUTPUT.UUID)
+      }
       resolve(messageObject)
     })
   }
+
+  convertToGUID = (base64EncodedOctetString: string): string => {
+    // Convert the base64 encoded octet string to a Uint8Array
+    const octets = new Uint8Array(atob(base64EncodedOctetString).split('').map(char => char.charCodeAt(0)));
+
+    // Create a new DataView with the octets as its buffer
+    const dataView = new DataView(octets.buffer);
+
+    // Get the first four bytes and convert them to an unsigned 32-bit integer
+    const data1 = dataView.getUint32(0, true);
+
+    // Get the next two bytes and convert them to an unsigned 16-bit integer
+    const data2 = dataView.getUint16(4, true);
+
+    // Get the next two bytes and convert them to an unsigned 16-bit integer
+    const data3 = dataView.getUint16(6, true);
+
+    // Get the next 2 bytes and convert them to an unsigned 16-bit integer
+    const data4_1 = dataView.getUint16(8, false);
+
+    // Get the next 6 bytes by copy them to a new ArrayBuffer
+    var data4_2 = new ArrayBuffer(6)
+    var dataView2 = new DataView(data4_2);
+    dataView2.setUint8(5, dataView.getUint8(10));
+    dataView2.setUint8(4, dataView.getUint8(11));
+    dataView2.setUint8(3, dataView.getUint8(12));
+    dataView2.setUint8(2, dataView.getUint8(13));
+    dataView2.setUint8(1, dataView.getUint8(14));
+    dataView2.setUint8(0, dataView.getUint8(15));
+    // convert the ArrayBuffer to hex string
+    var hex = '';
+    var bytes = new Uint8Array(data4_2);
+    var length = bytes.byteLength;
+    for (var i = 0; i < length; i++) {
+        hex += bytes[i].toString(16).padStart(2, '0');
+    }
+    // Reverse the byte order
+    hex = hex.match(/.{2}/g).reverse().join('');
+    // Return the formatted GUID string
+    return `${data1.toString(16).padStart(8, '0')}-${data2.toString(16).padStart(4, '0')}-${data3.toString(16).padStart(4, '0')}-${data4_1.toString(16).padStart(4, '0')}-${hex}`;
+}
+
 
   private getDataFromJSONResponse = (messageObject: MessageObject): object => {
     let keys: string[], jsonResponse: object
