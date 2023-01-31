@@ -5,7 +5,7 @@
 
 import * as express from 'express'
 import * as bodyParser from 'body-parser'
-import { ClassMetaData, Logger, LogType, parseBody } from './common'
+import { ClassMetaData, Logger, LogType, getObject } from './common'
 import { MessageHandler, MessageObject, MessageRequest } from './messageHandler'
 import { DigestAuth } from './digestAuth'
 import { SocketHandler, SocketParameters } from './socketHandler'
@@ -31,15 +31,22 @@ class HttpResponse {
 app.use(express.static('public'))
 app.use(bodyParser.json({ type: 'application/json' }))
 
-app.get('/', function (req, res) {
+app.route('/').get((req, res) => {
   res.sendFile('index.html')
 })
 
-app.get('/classes', function (req, res) {
-  res.status(200).send(ClassMetaData)
+app.route('/classes').get(async (req, res) => {
+  if (req.query.class && req.query.method) {
+    const classItem = await getObject(req.query.class as string, req.query.method as string, socketHandler, digestAuth)
+    console.log(classItem)
+    res.status(200).send(classItem)
+  }
+  else {
+    res.status(200).send(ClassMetaData)
+  }
 })
 
-app.post('/connect', async function (req, res) {
+app.route('/connect').post(async (req, res) => {
   const request: HttpRequest = req.body
   if (request.address == null || request.port == null || request.username == null || request.password == null) {
     res.status(404).json({ error: 'invalid request' })
@@ -58,7 +65,7 @@ app.post('/connect', async function (req, res) {
   }
 })
 
-app.post('/wsman', async function (req, res) {
+app.route('/wsman').post(async (req, res) => {
   if (req.body) {
     const messageHandler = new MessageHandler(socketHandler, digestAuth)
     const messageObject: any = messageHandler.createMessageObject(req.body)
@@ -76,7 +83,7 @@ app.post('/wsman', async function (req, res) {
   }
 })
 
-app.post('/submit', async function (req, res) {
+app.route('/submit').post(async (req, res) => {
   if (digestAuth == null || socketHandler == null) {
     res.status(500).send('Error: not connected')
     Logger(LogType.ERROR, 'INDEX', 'Error: not connected')
@@ -99,7 +106,7 @@ app.post('/submit', async function (req, res) {
   }
 })
 
-app.delete('/disconnect', function (req, res) {
+app.route('/disconnect').delete((req, res) => {
   if (socketHandler.socket !== null) {
     socketHandler.socket.destroy()
     socketHandler.socket = null

@@ -7,10 +7,13 @@ import { AMT, CIM, IPS } from "@open-amt-cloud-toolkit/wsman-messages"
 import * as xml2js from 'xml2js'
 import { HttpZResponseModel } from 'http-z'
 import { logLevel } from "."
+import { SocketHandler } from "./socketHandler"
+import { MessageHandler, MessageObject, MessageRequest } from "./messageHandler"
+import { DigestAuth } from "./digestAuth"
 
 export const ClassMetaData = {
   AMT_AlarmClockService: {
-    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL]
+    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL, AMT.Methods.ADD_ALARM]
   },
   AMT_AuditLog: {
     methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL, AMT.Methods.READ_RECORDS]
@@ -155,6 +158,25 @@ export const ClassMetaData = {
   }
 }
 
+export const getObject = async (className: string, method: string, socket: SocketHandler, digestAuth: DigestAuth): Promise<any> => {
+  const messageHandler = new MessageHandler(socket, digestAuth)
+  const api = className.split('_')[0].toLowerCase()
+  const apiCall = className.split('_')[1]
+  let message = ''
+  if (method === "AddAlarm") {
+    message = messageHandler.ips.AlarmClockOccurrence.Get()
+  } else {
+    message = messageHandler[api][apiCall].Get()
+  }
+  const request: MessageRequest = {
+    xml: message,
+    apiCall: className,
+    method: method
+  }
+  const messageObject = messageHandler.createMessageObject(request)
+  return await messageHandler.sendMessage(messageObject)
+}
+
 // Properly handles numbers at the beginning of ElementName or InstanceID
 export const myParseNumbers = (value: string, name: string): any => {
   if (name === 'ElementName' || name === 'InstanceID') {
@@ -215,7 +237,7 @@ export enum LogType {
   DEBUG = 'DEBUG'
 }
 export const Logger = (type: LogType, module: string, msg: string): void => {
-  switch(type.toUpperCase()) {
+  switch (type.toUpperCase()) {
     case LogType.ERROR:
       console.error(`${module}:${msg}`)
       break

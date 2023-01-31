@@ -23,6 +23,7 @@ export class MessageObject {
   statusCode?: number
   xml?: string
   xmlResponse?: string
+  userInput?: any
   constructor(msgClass?: string, msgAPI?: string, msgMethod?: string, msgXML?: string, enumerationContext?: string) {
     this.class = msgClass
     this.api = msgAPI
@@ -37,6 +38,7 @@ export class MessageRequest {
   apiCall: string
   method: string
   xml?: string
+  userInput?: any
 }
 
 export class MessageHandler {
@@ -74,6 +76,7 @@ export class MessageHandler {
       msgObj.apiCall = request.apiCall
       msgObj.method = request.method
       msgObj.xml = request.xml
+      msgObj.userInput = request.userInput
     }
     return msgObj
   }
@@ -119,6 +122,10 @@ export class MessageHandler {
             break
           case IPS.Methods.CANCEL_OPT_IN:
             resolve(this.ips.OptInService.CancelOptIn())
+            break
+          case AMT.Methods.ADD_ALARM:
+            messageObject.userInput.StartTime = new Date(messageObject.userInput.StartTime)
+            resolve(this.amt.AlarmClockService.AddAlarm(messageObject.userInput))
             break
           default:
             throw new Error('unsupported method')
