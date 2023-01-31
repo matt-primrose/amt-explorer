@@ -64,8 +64,8 @@
       display: none;
       position: absolute;
       margin: auto;
-      width: 450px;
-      height: 200px;
+      width: min-content;
+      height: min-content;
       top: 0;
       bottom: 0;
       left: 0;
@@ -102,9 +102,19 @@
       display: table-row;
     }
 
-    input,
+    input {
+      display: table-cell;
+      width: 150px;
+      vertical-align: middle;
+    }
+
     select,
-    label,
+    label {
+      display: table-cell;
+      width: 250px;
+      vertical-align: middle;
+    }
+
     textarea {
       display: table-cell;
       width: 200px;
@@ -367,6 +377,12 @@
     return objectList[splitCall[0]][splitCall[1]]
   }
 
+  function closeInputDialog() {
+    const parameters = document.getElementById('parameters')
+    parameters.innerHTML = ''
+    toggleDiv('user-inputs', 'none')
+  }
+
   const objectList = {
     AMT_AlarmClockService: {
       AddAlarm: {
@@ -434,8 +450,12 @@
         </div>
         <div id="user-inputs">
           <p id="parameters"></p>
-          <p><label></label><button id="input" type="button" style="float: right; visibility: visible;"
-              onclick="collectUserInput()">OK</button></p>
+          <p>
+            <button id="input" type="button" style="float: right; visibility: visible;"
+              onclick="closeInputDialog()">Cancel</button>
+            <button id="input" type="button" style="float: right; margin-right: 5px; visibility: visible;"
+              onclick="collectUserInput()">OK</button>
+          </p>
         </div>
         <div id="message-to-submit">
           <p id="xmlTransmit" style="visibility: visible;"><label>XML Transmit:</label><textarea id="tbXMLTransmit"
