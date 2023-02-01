@@ -158,7 +158,10 @@
       toggleDiv('disconnect', 'block')
       toggleDiv('dropDowns', 'block')
     } else {
-      // error message
+      toggleDiv('connect', 'block')
+      toggleDiv('disconnect', 'none')
+      resetView()
+      resetDropDowns()
     }
   }
 
@@ -270,9 +273,7 @@
     xhr.open(method, ServerPost + route)
     xhr.setRequestHeader('Content-type', 'application/json')
     xhr.onreadystatechange = function () {
-      if (xhr.readyState === 4 && xhr.status === 200) {
-        console.log(`httpRequest xhr.response: ${xhr.response}`)
-        console.log(`httpRequest route: ${route}`)
+      if (xhr.readyState === 4) {
         processHttpResponse(xhr.response, route, callback)
       }
     }
@@ -350,16 +351,17 @@
     const inputObject = getInputObject(apiCall)
     let userInput = {}
     for (item in inputObject) {
-      if (inputObject[item].type === 'checkbox') {
-        userInput[item] = document.getElementById(item).checked ? true : false
+      const itemObj = inputObject[item]
+      if (itemObj.type === 'checkbox') {
+        userInput[item] = document.getElementById(itemObj.id).checked ? true : false
       }
       else {
-        const elementItem = document.getElementById(item)
-        if (elementItem.value == '' && elementItem.hasAttribute('required')) {
+        const elementItem = document.getElementById(itemObj.id)
+        if (elementItem?.value == '' && elementItem.hasAttribute('required')) {
           alert('Required field is missing')
           return
         } else {
-          userInput[item] = document.getElementById(item).value
+          userInput[item] = document.getElementById(itemObj.id).value
         }
       }
     }
@@ -415,6 +417,22 @@
           id: 'DeleteOnCompletion',
           type: 'checkbox',
           required: ''
+        }
+      }
+    },
+    AMT_AuthorizationService: {
+      SetAdminAclEntryEx: {
+        Username: {
+          name: 'User Name',
+          id: 'username',
+          type: 'text',
+          required: 'required'
+        },
+        DigestPassword: {
+          name: 'Password',
+          id: 'password',
+          type: 'password',
+          required: 'required'
         }
       }
     }

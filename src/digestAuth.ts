@@ -108,7 +108,7 @@ export class DigestAuth {
     // console nonce should be a unique opaque quoted string
     this.digestAuthHeaders.consoleNonce = Math.random().toString(36).substring(7)
     const nc = this.createNC()
-    const HA1 = this.generateHash(`${this.username}:${this.digestAuthHeaders.realm}:${this.password}`)
+    const HA1 = this.createDigestPassword(this.username, this.password)
     const HA2 = this.generateHash(`${action}:${url}`)
     responseDigest = this.generateHash(`${HA1}:${this.digestAuthHeaders.nonce}:${nc}:${this.digestAuthHeaders.consoleNonce}:${this.digestAuthHeaders.qop}:${HA2}`)
     const authorizationRequestHeader = this.generateDigest({
@@ -123,6 +123,10 @@ export class DigestAuth {
     })
     msg += `Authorization: ${authorizationRequestHeader}\r\n`
     return msg
+  }
+
+  public createDigestPassword = (username: string, password: string): string => {
+    return this.generateHash(`${username}:${this.digestAuthHeaders.realm}:${password}`)
   }
 
   private createNC = (): string => {

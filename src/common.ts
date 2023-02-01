@@ -19,7 +19,7 @@ export const ClassMetaData = {
     methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL, AMT.Methods.READ_RECORDS]
   },
   AMT_AuthorizationService: {
-    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL]
+    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL, AMT.Methods.SET_ADMIN_ACL_ENTRY_EX]
   },
   AMT_BootCapabilities: {
     methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL]
@@ -156,25 +156,6 @@ export const ClassMetaData = {
   IPS_OptInService: {
     methods: [IPS.Methods.CANCEL_OPT_IN, IPS.Methods.ENUMERATE, IPS.Methods.GET, IPS.Methods.PULL, IPS.Methods.PUT, IPS.Methods.START_OPT_IN]
   }
-}
-
-export const getObject = async (className: string, method: string, socket: SocketHandler, digestAuth: DigestAuth): Promise<any> => {
-  const messageHandler = new MessageHandler(socket, digestAuth)
-  const api = className.split('_')[0].toLowerCase()
-  const apiCall = className.split('_')[1]
-  let message = ''
-  if (method === "AddAlarm") {
-    message = messageHandler.ips.AlarmClockOccurrence.Get()
-  } else {
-    message = messageHandler[api][apiCall].Get()
-  }
-  const request: MessageRequest = {
-    xml: message,
-    apiCall: className,
-    method: method
-  }
-  const messageObject = messageHandler.createMessageObject(request)
-  return await messageHandler.sendMessage(messageObject)
 }
 
 // Properly handles numbers at the beginning of ElementName or InstanceID

@@ -127,6 +127,10 @@ export class MessageHandler {
             messageObject.userInput.StartTime = new Date(messageObject.userInput.StartTime)
             resolve(this.amt.AlarmClockService.AddAlarm(messageObject.userInput))
             break
+          case AMT.Methods.SET_ADMIN_ACL_ENTRY_EX:
+            const digestPassword = this.digestAuth.createDigestPassword(messageObject.userInput.Username, messageObject.userInput.DigestPassword)
+            resolve(this.amt.AuthorizationService.SetAdminACLEntryEx(messageObject.userInput.Username, digestPassword))
+            break
           default:
             throw new Error('unsupported method')
         }

@@ -5,7 +5,7 @@
 
 import * as express from 'express'
 import * as bodyParser from 'body-parser'
-import { ClassMetaData, Logger, LogType, getObject } from './common'
+import { ClassMetaData, Logger, LogType } from './common'
 import { MessageHandler, MessageObject, MessageRequest } from './messageHandler'
 import { DigestAuth } from './digestAuth'
 import { SocketHandler, SocketParameters } from './socketHandler'
@@ -35,16 +35,7 @@ app.route('/').get((req, res) => {
   res.sendFile('index.html')
 })
 
-app.route('/classes').get(async (req, res) => {
-  if (req.query.class && req.query.method) {
-    const classItem = await getObject(req.query.class as string, req.query.method as string, socketHandler, digestAuth)
-    console.log(classItem)
-    res.status(200).send(classItem)
-  }
-  else {
-    res.status(200).send(ClassMetaData)
-  }
-})
+app.route('/classes').get(async (req, res) => { res.status(200).send(ClassMetaData) })
 
 app.route('/connect').post(async (req, res) => {
   const request: HttpRequest = req.body
@@ -102,6 +93,7 @@ app.route('/submit').post(async (req, res) => {
     const httpResponse = new HttpResponse()
     httpResponse.xmlBody = response.xmlResponse
     httpResponse.jsonBody = response.jsonResponse
+    console.log(`submit router response: ${JSON.stringify(httpResponse)}`)
     res.status(response.statusCode).send(httpResponse)
   }
 })
