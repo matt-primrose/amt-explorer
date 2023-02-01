@@ -448,13 +448,14 @@
     <main class="content">
       <form>
         <div id="connection">
-          <p><label>Host:</label><input type="text" name="host" value="localhost"></p>
-          <p><label>Port:</label><input type="label" name="port" value="16992" readonly style="color: grey;"></p>
-          <p><label>Username:</label><input type="text" name="username" value="admin"></p>
-          <p><label>Password:</label><input type="password" name="password" value=""></p>
-          <p><label></label><button id="connect" type="button" style="float: right; display: inline;"
-              onclick=attemptConnection()>Connect</button>
-            <button id="disconnect" type="button" style="float: right; display: none;"
+          <p><label>Host:</label><input data-cy="host" type="text" name="host" value="localhost"></p>
+          <p><label>Port:</label><input data-cy="port" type="label" name="port" value="16992" readonly
+              style="color: grey;"></p>
+          <p><label>Username:</label><input data-cy="username" type="text" name="username" value="admin"></p>
+          <p><label>Password:</label><input data-cy="password" type="password" name="password" value=""></p>
+          <p><label></label><button data-cy="connectbtn" id="connect" type="button"
+              style="float: right; display: inline;" onclick=attemptConnection()>Connect</button>
+            <button data-cy="disconnectbtn" id="disconnect" type="button" style="float: right; display: none;"
               onclick=attemptDisconnection()>Disconnect</button>
           </p>
           <p style="border-top: 1em solid transparent;"></p>
