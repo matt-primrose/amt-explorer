@@ -308,12 +308,13 @@
   }
 
   function handleAMTResponse(response) {
-    if (response) {
-      console.log(`handleAMTResponse: ${JSON.parse(response)}`)
-      const xmlReceived = document.getElementById('tbXMLReceive')
-      const jsonReceived = document.getElementById('tbJSONReceive')
+    const xmlReceived = document.getElementById('tbXMLReceive')
+    const jsonReceived = document.getElementById('tbJSONReceive')
+    if (JSON.parse(response).statusCode === 200) { 
       xmlReceived.value = JSON.parse(response).xmlBody
       jsonReceived.value = JSON.stringify(JSON.parse(response).jsonBody.Envelope.Body, null, 2)
+    } else {
+      xmlReceived.value = JSON.parse(response).error
     }
   }
 
@@ -422,12 +423,6 @@
     },
     AMT_AuthorizationService: {
       SetAdminAclEntryEx: {
-        Username: {
-          name: 'User Name',
-          id: 'username',
-          type: 'text',
-          required: 'required'
-        },
         DigestPassword: {
           name: 'Password',
           id: 'password',

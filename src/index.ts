@@ -26,6 +26,8 @@ class HttpRequest {
 class HttpResponse {
   xmlBody: string
   jsonBody: any
+  error: string[]
+  statusCode: number
 }
 
 app.use(express.static('public'))
@@ -93,7 +95,9 @@ app.route('/submit').post(async (req, res) => {
     const httpResponse = new HttpResponse()
     httpResponse.xmlBody = response.xmlResponse
     httpResponse.jsonBody = response.jsonResponse
-    console.log(`submit router response: ${JSON.stringify(httpResponse)}`)
+    httpResponse.error = response.error
+    httpResponse.statusCode = response.statusCode
+    Logger(LogType.INFO, 'INDEX', JSON.stringify(httpResponse))
     res.status(response.statusCode).send(httpResponse)
   }
 })
@@ -102,6 +106,7 @@ app.route('/disconnect').delete((req, res) => {
   if (socketHandler.socket !== null) {
     socketHandler.socket.destroy()
     socketHandler.socket = null
+    socketHandler = null
   }
   res.status(200).send('disconnected')
 })

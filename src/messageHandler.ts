@@ -30,6 +30,7 @@ export class MessageObject {
     this.method = msgMethod
     this.xml = msgXML
     this.enumerationContext = enumerationContext
+    this.error = []
   }
 }
 
@@ -128,8 +129,8 @@ export class MessageHandler {
             resolve(this.amt.AlarmClockService.AddAlarm(messageObject.userInput))
             break
           case AMT.Methods.SET_ADMIN_ACL_ENTRY_EX:
-            const digestPassword = this.digestAuth.createDigestPassword(messageObject.userInput.Username, messageObject.userInput.DigestPassword)
-            resolve(this.amt.AuthorizationService.SetAdminACLEntryEx(messageObject.userInput.Username, digestPassword))
+            const digestPassword = this.digestAuth.createDigestCredential('admin', messageObject.userInput.DigestPassword)
+            resolve(this.amt.AuthorizationService.SetAdminACLEntryEx('admin', digestPassword))
             break
           default:
             throw new Error('unsupported method')
@@ -175,19 +176,29 @@ export class MessageHandler {
   public sendMessage = async (messageObject: MessageObject): Promise<MessageObject> => {
     return new Promise(async (resolve, reject) => {
       if (messageObject.api == null || messageObject.class == null || messageObject.method == null || messageObject.xml == null) {
+        messageObject.statusCode = 500
         messageObject.error.push('missing required MessageObject properties')
         resolve(messageObject)
       }
       let response = await this.sendToSocket(messageObject)
-      if (response.statusCode === 401) {
+      let retryCount = 0
+      while (response.statusCode === 401) {
+        retryCount++
         response = await this.handleRetry(messageObject, response)
+        if (retryCount > 2) {
+          response.statusCode = 500
+          messageObject.statusCode = 500
+          messageObject.error.push('invalid AMT credentials')
+        }
       }
-      messageObject.xmlResponse = parseBody(response)
-      messageObject.statusCode = response.statusCode
-      messageObject.jsonResponse = parseXML(messageObject.xmlResponse)
-      if (messageObject.jsonResponse.Envelope.Body.GetUuid_OUTPUT?.UUID) {
-        messageObject.jsonResponse.Envelope.Body.GetUuid_OUTPUT.UUID = this.convertToGUID(messageObject.jsonResponse.Envelope.Body.GetUuid_OUTPUT.UUID)
-        console.log(messageObject.jsonResponse.Envelope.Body.GetUuid_OUTPUT.UUID)
+      if (response.statusCode === 200) {
+        messageObject.xmlResponse = parseBody(response)
+        messageObject.statusCode = response.statusCode
+        messageObject.jsonResponse = parseXML(messageObject.xmlResponse)
+        if (messageObject.jsonResponse.Envelope.Body.GetUuid_OUTPUT?.UUID) {
+          messageObject.jsonResponse.Envelope.Body.GetUuid_OUTPUT.UUID = this.convertToGUID(messageObject.jsonResponse.Envelope.Body.GetUuid_OUTPUT.UUID)
+          console.log(messageObject.jsonResponse.Envelope.Body.GetUuid_OUTPUT.UUID)
+        }
       }
       resolve(messageObject)
     })
@@ -226,13 +237,13 @@ export class MessageHandler {
     var bytes = new Uint8Array(data4_2);
     var length = bytes.byteLength;
     for (var i = 0; i < length; i++) {
-        hex += bytes[i].toString(16).padStart(2, '0');
+      hex += bytes[i].toString(16).padStart(2, '0');
     }
     // Reverse the byte order
     hex = hex.match(/.{2}/g).reverse().join('');
     // Return the formatted GUID string
     return `${data1.toString(16).padStart(8, '0')}-${data2.toString(16).padStart(4, '0')}-${data3.toString(16).padStart(4, '0')}-${data4_1.toString(16).padStart(4, '0')}-${hex}`;
-}
+  }
 
 
   private getDataFromJSONResponse = (messageObject: MessageObject): object => {

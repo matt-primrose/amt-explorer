@@ -109,8 +109,8 @@ export class DigestAuth {
     this.digestAuthHeaders.consoleNonce = Math.random().toString(36).substring(7)
     const nc = this.createNC()
     const HA1 = this.createDigestPassword(this.username, this.password)
-    const HA2 = this.generateHash(`${action}:${url}`)
-    responseDigest = this.generateHash(`${HA1}:${this.digestAuthHeaders.nonce}:${nc}:${this.digestAuthHeaders.consoleNonce}:${this.digestAuthHeaders.qop}:${HA2}`)
+    const HA2 = this.createMd5Hash(`${action}:${url}`)
+    responseDigest = this.createMd5Hash(`${HA1}:${this.digestAuthHeaders.nonce}:${nc}:${this.digestAuthHeaders.consoleNonce}:${this.digestAuthHeaders.qop}:${HA2}`)
     const authorizationRequestHeader = this.generateDigest({
       username: this.username,
       realm: this.digestAuthHeaders.realm,
@@ -125,8 +125,17 @@ export class DigestAuth {
     return msg
   }
 
+  // Used for authentication header in wsman messages to AMT
   public createDigestPassword = (username: string, password: string): string => {
-    return this.generateHash(`${username}:${this.digestAuthHeaders.realm}:${password}`)
+    return this.createMd5Hash(`${username}:${this.digestAuthHeaders.realm}:${password}`)
+  }
+
+  // Used to change a credential in AMT
+  public createDigestCredential = (username: string, password: string): string => {
+    let data: string = `${username}:${this.digestAuthHeaders.realm}:${password}`
+    const signPassword = this.createMd5Hash(data)
+    const result = signPassword.match(/../g).map((v) => String.fromCharCode(parseInt(v, 16))).join('')
+    return Buffer.from(result, 'binary').toString('base64')
   }
 
   private createNC = (): string => {
@@ -147,7 +156,7 @@ export class DigestAuth {
     return obj
   }
 
-  private generateHash = (data: string): string => {
+  private createMd5Hash = (data: string): string => {
     return createHash('md5').update(data).digest('hex')
   }
 
