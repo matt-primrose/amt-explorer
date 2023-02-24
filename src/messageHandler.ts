@@ -132,6 +132,9 @@ export class MessageHandler {
             const digestPassword = this.digestAuth.createDigestCredential('admin', messageObject.userInput.DigestPassword)
             resolve(this.amt.AuthorizationService.SetAdminACLEntryEx('admin', digestPassword))
             break
+          case AMT.Methods.GENERATE_KEY_PAIR:
+            resolve(this.amt.PublicKeyManagementService.GenerateKeyPair({KeyAlgorithm: 0, KeyLength: 2048}))
+            break
           default:
             throw new Error('unsupported method')
         }
