@@ -47,6 +47,14 @@ app.route('/connect').post(bruteForce.prevent, async (req, res) => {
   if (request.address == null || request.port == null || request.username == null || request.password == null) {
     res.status(404).json({ error: 'invalid request' })
   }
+  if (request.port === 16992) {
+    request.port = 16992
+  } else {
+    request.port = 16993
+  }
+  if (!(/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(request.address)) || !(request.address === 'localhost')) {
+    res.status(404).json({ error: 'invalid request'} )
+  }
   digestAuth = new DigestAuth(request.username, request.password, request.address, request.port)
   socketParameters = { address: request.address, port: request.port }
   if (socketHandler == null) { socketHandler = new SocketHandler(socketParameters) }
