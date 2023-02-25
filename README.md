@@ -1,3 +1,4 @@
+![codecov.io](https://codecov.io/github/matt-primrose/amt-explorer/coverage.svg?branch=main)
 # AMT Explorer
 
 ## Installation
