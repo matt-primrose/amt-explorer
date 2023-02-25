@@ -135,6 +135,10 @@ export class MessageHandler {
           case AMT.Methods.GENERATE_KEY_PAIR:
             resolve(this.amt.PublicKeyManagementService.GenerateKeyPair({KeyAlgorithm: 0, KeyLength: 2048}))
             break
+          case AMT.Methods.ADD_CERTIFICATE:
+            const certBlob: AMT.Models.AddCertificate = { CertificateBlob: messageObject.userInput.Certificate }
+            resolve(this.amt.PublicKeyManagementService.AddCertificate(certBlob))
+            break
           default:
             throw new Error('unsupported method')
         }
@@ -194,15 +198,18 @@ export class MessageHandler {
           messageObject.error.push('invalid AMT credentials')
         }
       }
-      if (response.statusCode === 200) {
+      // if (response.statusCode === 200) {
         messageObject.xmlResponse = parseBody(response)
         messageObject.statusCode = response.statusCode
         messageObject.jsonResponse = parseXML(messageObject.xmlResponse)
+        // Logger(LogType.DEBUG, 'MESSAGEHANDER', JSON.stringify(messageObject))
+        if (messageObject.jsonResponse.Envelope.Body.Fault?.Reason?.Text) {{
+          messageObject.error = messageObject.jsonResponse.Envelope.Body.Fault.Reason.Text
+        }}
         if (messageObject.jsonResponse.Envelope.Body.GetUuid_OUTPUT?.UUID) {
           messageObject.jsonResponse.Envelope.Body.GetUuid_OUTPUT.UUID = this.convertToGUID(messageObject.jsonResponse.Envelope.Body.GetUuid_OUTPUT.UUID)
-          console.log(messageObject.jsonResponse.Envelope.Body.GetUuid_OUTPUT.UUID)
         }
-      }
+      // }
       resolve(messageObject)
     })
   }

@@ -311,7 +311,7 @@
   function handleAMTResponse(response) {
     const xmlReceived = document.getElementById('tbXMLReceive')
     const jsonReceived = document.getElementById('tbJSONReceive')
-    if (JSON.parse(response).statusCode === 200) { 
+    if (JSON.parse(response).statusCode === 200) {
       xmlReceived.value = JSON.parse(response).xmlBody
       jsonReceived.value = JSON.stringify(JSON.parse(response).jsonBody.Envelope.Body, null, 2)
     } else {
@@ -347,7 +347,7 @@
     return htmlContent
   }
 
-  function collectUserInput() {
+  async function collectUserInput() {
     const parameters = document.getElementById('parameters')
     const apiCall = parameters.children[0].id
     const inputObject = getInputObject(apiCall)
@@ -356,6 +356,14 @@
       const itemObj = inputObject[item]
       if (itemObj.type === 'checkbox') {
         userInput[item] = document.getElementById(itemObj.id).checked ? true : false
+      }
+      else if (itemObj.type === 'file') {
+        const file = document.getElementById(itemObj.id).files[0]
+        console.log(file)
+        if (!file) {
+          return
+        }
+        userInput[item] = await processFile(file)
       }
       else {
         const elementItem = document.getElementById(itemObj.id)
@@ -372,6 +380,7 @@
       method: currentMethod,
       userInput: userInput
     }
+    console.log(JSON.stringify(messageObj))
     httpRequest('POST', 'wsman', JSON.stringify(messageObj))
     toggleDiv('user-inputs', 'none')
   }
@@ -379,6 +388,19 @@
   function getInputObject(apiCall) {
     const splitCall = apiCall.split('.')
     return objectList[splitCall[0]][splitCall[1]]
+  }
+
+  function processFile(file) {
+    return new Promise(async (resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const base64 = e.target.result
+        const index = base64.indexOf('base64')
+        console.log(base64.substring(index + 7, base64.length))
+        resolve(base64.substring(index + 7, base64.length))
+      }
+      reader.readAsDataURL(file)
+    })
   }
 
   function closeInputDialog() {
@@ -431,6 +453,16 @@
           required: 'required'
         }
       }
+    },
+    AMT_PublicKeyManagementService: {
+      AddCertificate: {
+        Certificate: {
+          name: 'Certificate',
+          id: 'certificate',
+          type: 'file',
+          required: 'required'
+        }
+      }
     }
   }
 
@@ -465,9 +497,9 @@
         <div id="user-inputs">
           <p id="parameters"></p>
           <p>
-            <button id="input" type="button" style="float: right; visibility: visible;"
+            <button id="close" type="button" style="float: right; visibility: visible;"
               onclick="closeInputDialog()">Cancel</button>
-            <button id="input" type="button" style="float: right; margin-right: 5px; visibility: visible;"
+            <button id="ok" type="button" style="float: right; margin-right: 5px; visibility: visible;"
               onclick="collectUserInput()">OK</button>
           </p>
         </div>
