@@ -53,11 +53,14 @@ app.route('/connect').post(bruteForce.prevent, async (req, res) => {
   } else {
     port = 16993
   }
+  let address: string
   if (!(/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(request.address)) || !(request.address === 'localhost')) {
     res.status(404).json({ error: 'invalid request'} )
+  } else {
+    address = request.address
   }
-  digestAuth = new DigestAuth(request.username, request.password, request.address, port)
-  socketParameters = { address: request.address, port: port }
+  digestAuth = new DigestAuth(request.username, request.password, address, port)
+  socketParameters = { address: address, port: port }
   if (socketHandler == null) { socketHandler = new SocketHandler(socketParameters) }
   const connectResponse = await socketHandler.connect()
   if (connectResponse === 'connected') {
