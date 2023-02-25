@@ -13,7 +13,7 @@ import ExpressBrute = require("express-brute")
 
 const store = new ExpressBrute.MemoryStore()
 const bruteForce = new ExpressBrute(store)
-export const logLevel = 'debug'
+process.env.LOG_LEVEL = LogType.DEBUG
 const app = express()
 const serverPort = process.env.PORT ?? 3001
 let socketHandler: SocketHandler

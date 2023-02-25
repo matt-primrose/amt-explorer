@@ -87,7 +87,7 @@ export class DigestAuth {
     const url = '/wsman'
     const action = 'POST'
     let message: string = `${action} ${url} HTTP/1.1\r\n`
-    if (digestAuthHeaders.qop != null) {
+    if (digestAuthHeaders?.qop != null) {
       message += this.createAuthorizationString(digestAuthHeaders)
     }
     message += Buffer.from([

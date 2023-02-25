@@ -6,10 +6,6 @@
 import { AMT, CIM, IPS } from "@open-amt-cloud-toolkit/wsman-messages"
 import * as xml2js from 'xml2js'
 import { HttpZResponseModel } from 'http-z'
-import { logLevel } from "."
-import { SocketHandler } from "./socketHandler"
-import { MessageHandler, MessageObject, MessageRequest } from "./messageHandler"
-import { DigestAuth } from "./digestAuth"
 
 export const ClassMetaData = {
   AMT_AlarmClockService: {
@@ -223,7 +219,9 @@ export const Logger = (type: LogType, module: string, msg: string): void => {
       console.error(`${module}:${msg}`)
       break
     case LogType.DEBUG:
-      if (logLevel.toUpperCase() === 'DEBUG') { console.debug(`${module}:${msg}`) }
+      if (process.env.LOG_LEVEL === LogType.DEBUG) {
+        console.debug(`${module}:${msg}`)
+      }
       break
     case LogType.INFO:
       console.info(`${module}:${msg}`)
