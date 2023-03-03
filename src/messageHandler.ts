@@ -134,6 +134,7 @@ export class MessageHandler {
             break
           case AMT.Methods.GENERATE_KEY_PAIR:
             resolve(this.amt.PublicKeyManagementService.GenerateKeyPair({ KeyAlgorithm: 0, KeyLength: 2048 }))
+            resolve(this.amt.PublicKeyManagementService.GenerateKeyPair({ KeyAlgorithm: 0, KeyLength: 2048 }))
             break
           case AMT.Methods.ADD_CERTIFICATE:
             const certBlob: AMT.Models.AddCertificate = { CertificateBlob: messageObject.userInput.Certificate }
@@ -220,9 +221,21 @@ export class MessageHandler {
         if (retryCount > 2) {
           response.statusCode = 401
           messageObject.statusCode = 401
+          response.statusCode = 401
+          messageObject.statusCode = 401
           messageObject.error.push('invalid AMT credentials')
           break
+          break
         }
+      }
+      messageObject.xmlResponse = parseBody(response)
+      messageObject.statusCode = response.statusCode
+      messageObject.jsonResponse = parseXML(messageObject.xmlResponse)
+      if (messageObject.jsonResponse !== null && messageObject.jsonResponse.Envelope?.Body?.Fault?.Reason?.Text) {
+        messageObject.error.push(messageObject.jsonResponse.Envelope.Body.Fault.Reason.Text)
+      }
+      if (messageObject.jsonResponse !== null && messageObject.jsonResponse.Envelope?.Body?.GetUuid_OUTPUT?.UUID) {
+        messageObject.jsonResponse.Envelope.Body.GetUuid_OUTPUT.UUID = this.convertToGUID(messageObject.jsonResponse.Envelope.Body.GetUuid_OUTPUT.UUID)
       }
       messageObject.xmlResponse = parseBody(response)
       messageObject.statusCode = response.statusCode
