@@ -15,7 +15,7 @@ export const ClassMetaData = {
     methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL, AMT.Methods.READ_RECORDS]
   },
   AMT_AuthorizationService: {
-    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL, AMT.Methods.SET_ADMIN_ACL_ENTRY_EX]
+    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL, AMT.Methods.SET_ADMIN_ACL_ENTRY_EX, AMT.Methods.ADD_ADMIN_ACL_ENTRY_EX, AMT.Methods.ENUMERATE_USER_ACL_ENTRIES, AMT.Methods.GET_ACL_ENABLED_STATE, AMT.Methods.GET_ADMIN_ACL_ENTRY, AMT.Methods.GET_ADMIN_ACL_ENTRY_STATUS, AMT.Methods.GET_ADMIN_NET_ACL_ENTRY_STATUS, AMT.Methods.GET_USER_ACL_ENTRY_EX, AMT.Methods.REMOVE_USER_ACL_ENTRY, AMT.Methods.SET_ACL_ENABLED_STATE, AMT.Methods.UPDATE_USER_ACL_ENTRY_EX]
   },
   AMT_BootCapabilities: {
     methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL]
