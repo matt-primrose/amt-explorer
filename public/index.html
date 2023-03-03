@@ -64,7 +64,7 @@
       display: none;
       position: absolute;
       margin: auto;
-      width: min-content;
+      width: fit-content;
       height: min-content;
       top: 0;
       bottom: 0;
@@ -251,6 +251,9 @@
       case 'Pull':
       case 'Enumerate':
       case 'GenerateKeyPair':
+      case 'GetAdminAclEntry':
+      case 'GetAdminAclEntryStatus':
+      case 'GetAdminNetAclEntryStatus':
         let messageObj = {
           apiCall: currentAPI,
           method: currentMethod
@@ -341,10 +344,41 @@
     const inputObject = objectList[api][method]
     let htmlContent = `<div id="${api}.${method}">`
     for (const item in inputObject) {
-      htmlContent += `<p><label>${inputObject[item].name}:</label><input type="${inputObject[item].type}" id="${inputObject[item].id}" value="" ${inputObject[item].required}></p>`
+      if (inputObject[item].type === 'checkbox' || inputObject[item].type === 'radio') {
+        for (let x = 0; x < inputObject[item].values.length; x++) {
+          htmlContent += `<p><label for="${inputObject[item].values[x]}">${inputObject[item].values[x]}</label><input type="${inputObject[item].type}" name="${inputObject[item].id}" value="${inputObject[item].values[x]}" ></p>`
+        }
+      } else {
+        htmlContent += `<p><label for="${inputObject[item].id}">${inputObject[item].name}:</label><input type="${inputObject[item].type}" id="${inputObject[item].id}" value="" ${inputObject[item].required}></p>`
+      }
     }
     htmlContent += '</div>'
     return htmlContent
+  }
+
+  const radioEnums = {
+    accessPermission: {
+      Local: 0,
+      Network: 1,
+      Any: 2
+    },
+  }
+  const checkboxEnums = {
+    realms: {
+      'Administrator': [3],
+      'Redirection': [2],
+      'Hardware Asset': [4],
+      'Remote Control': [5],
+      'Storage': [6, 8],
+      'Event Manager': [7, 19],
+      'Agent Presence': [9, 10],
+      'Circuit Breaker': [11],
+      'Network Time': [12],
+      'General Info': [13],
+      'Endpoint Access Control': [17, 18],
+      'Audit Log': [20],
+      'User Access Control': [21]
+    }
   }
 
   async function collectUserInput() {
@@ -355,7 +389,21 @@
     for (item in inputObject) {
       const itemObj = inputObject[item]
       if (itemObj.type === 'checkbox') {
-        userInput[item] = document.getElementById(itemObj.id).checked ? true : false
+        // Get all of the checkboxes
+        const checkboxes = Array.from(document.getElementsByName(itemObj.id))
+        // If there are more than 1 checkbox, we're sending in an array
+        if (checkboxes.length > 1) {
+          userInput[item] = []
+          checkboxes.forEach(e => {
+            // only send in the checked items
+            if (e.checked) {
+              checkboxEnums[e.name][e.value].forEach(i => userInput[item].push(i))
+            }
+          })
+        } else {
+          // if there is only a single checkbox it is a boolean value
+          checkboxes.forEach(e => { if (e.checked) { userInput[e.value] = true } else { userInput[e.value] = false } })
+        }
       }
       else if (itemObj.type === 'file') {
         const file = document.getElementById(itemObj.id).files[0]
@@ -364,6 +412,10 @@
           return
         }
         userInput[item] = await processFile(file)
+      }
+      else if (itemObj.type === 'radio') {
+        const radioButtons = Array.from(document.getElementsByName(itemObj.id))
+        radioButtons.forEach(e => { if (e.checked) { userInput[item] = radioEnums[itemObj.id][e.value] } })
       }
       else {
         const elementItem = document.getElementById(itemObj.id)
@@ -413,14 +465,14 @@
     AMT_AlarmClockService: {
       AddAlarm: {
         ElementName: {
-          name: 'Element Name',
-          id: 'ElementName',
+          name: 'Alarm Name',
+          id: 'alarmName',
           type: 'text',
           required: 'required'
         },
         InstanceID: {
-          name: 'Instance ID',
-          id: 'InstanceID',
+          name: 'Alarm ID',
+          id: 'alarmID',
           type: 'text',
           required: 'required'
         },
@@ -440,6 +492,7 @@
           name: 'Delete On Completion',
           id: 'DeleteOnCompletion',
           type: 'checkbox',
+          values: ['DeleteOnCompletion'],
           required: ''
         }
       }
@@ -451,6 +504,73 @@
           id: 'password',
           type: 'password',
           required: 'required'
+        }
+      },
+      EnumerateUserAclEntries: {
+        StartIndex: {
+          name: 'Start Index',
+          id: 'startIndex',
+          type: 'number',
+          required: 'required'
+        }
+      },
+      GetAclEnabledState: {
+        Handle: {
+          name: 'Handle',
+          id: 'handle',
+          type: 'number',
+          required: 'required'
+        }
+      },
+      SetAclEnabledState: {
+        Handle: {
+          name: 'Handle',
+          id: 'handle',
+          type: 'number',
+          required: 'required'
+        },
+        Enabled: {
+          name: 'Enabled',
+          id: 'enabled',
+          type: 'checkbox',
+          values: ['Enabled'],
+          required: ''
+        }
+      },
+      GetUserAclEntryEx: {
+        Handle: {
+          name: 'Handle',
+          id: 'handle',
+          type: 'number',
+          required: 'required'
+        }
+      },
+      AddUserAclEntryEx: {
+        DigestUsername: {
+          name: 'Digest Username',
+          id: 'digestUsername',
+          type: 'text',
+          required: 'required'
+        },
+        DigestPassword: {
+          name: 'Digest Password',
+          id: 'digestPassword',
+          type: 'password',
+          required: 'required'
+        },
+        AccessPermission: {
+          name: 'Access Permission',
+          id: 'accessPermission',
+          type: 'radio',
+          values: ['Local', 'Network', 'Any'],
+          required: ''
+        },
+        Realms: {
+          name: 'Realms',
+          id: 'realms',
+          type: 'checkbox',
+          values: ['Administrator', 'Redirection', 'Hardware Asset', 'Remote Control', 'Storage', 'Event Manager', 'Agent Presence', 'Circuit Breaker', 'Network Time', 'General Info', 'Endpoint Access Control', 'Audit Log', 'User Access Control'],
+          required: ''
         }
       }
     },
@@ -495,13 +615,15 @@
               onchange="methodChange(this)"></select></p>
         </div>
         <div id="user-inputs">
-          <p id="parameters"></p>
-          <p>
-            <button id="close" type="button" style="float: right; visibility: visible;"
-              onclick="closeInputDialog()">Cancel</button>
-            <button id="ok" type="button" style="float: right; margin-right: 5px; visibility: visible;"
-              onclick="collectUserInput()">OK</button>
-          </p>
+          <form>
+            <p id="parameters"></p>
+            <p>
+              <button id="close" type="button" style="float: right; visibility: visible;"
+                onclick="closeInputDialog()">Cancel</button>
+              <button id="ok" type="button" style="float: right; margin-right: 5px; visibility: visible;"
+                onclick="collectUserInput()">OK</button>
+            </p>
+          </form>
         </div>
         <div id="message-to-submit">
           <p id="xmlTransmit" style="visibility: visible;"><label>XML Transmit:</label><textarea id="tbXMLTransmit"

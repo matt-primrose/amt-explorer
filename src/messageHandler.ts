@@ -133,11 +133,36 @@ export class MessageHandler {
             resolve(this.amt.AuthorizationService.SetAdminACLEntryEx('admin', digestPassword))
             break
           case AMT.Methods.GENERATE_KEY_PAIR:
-            resolve(this.amt.PublicKeyManagementService.GenerateKeyPair({KeyAlgorithm: 0, KeyLength: 2048}))
+            resolve(this.amt.PublicKeyManagementService.GenerateKeyPair({ KeyAlgorithm: 0, KeyLength: 2048 }))
             break
           case AMT.Methods.ADD_CERTIFICATE:
             const certBlob: AMT.Models.AddCertificate = { CertificateBlob: messageObject.userInput.Certificate }
             resolve(this.amt.PublicKeyManagementService.AddCertificate(certBlob))
+            break
+          case AMT.Methods.ENUMERATE_USER_ACL_ENTRIES:
+            resolve(this.amt.AuthorizationService.EnumerateUserAclEntries(messageObject.userInput.StartIndex))
+            break
+          case AMT.Methods.GET_ACL_ENABLED_STATE:
+            resolve(this.amt.AuthorizationService.GetAclEnabledState(messageObject.userInput.Handle))
+            break
+          case AMT.Methods.GET_ADMIN_ACL_ENTRY:
+            resolve(this.amt.AuthorizationService.GetAdminAclEntry())
+            break
+          case AMT.Methods.GET_ADMIN_ACL_ENTRY_STATUS:
+            resolve(this.amt.AuthorizationService.GetAdminAclEntryStatus())
+            break
+          case AMT.Methods.GET_ADMIN_NET_ACL_ENTRY_STATUS:
+            resolve(this.amt.AuthorizationService.GetAdminNetAclEntryStatus())
+            break
+          case AMT.Methods.SET_ACL_ENABLED_STATE:
+            resolve(this.amt.AuthorizationService.SetAclEnabledState(messageObject.userInput.Handle, messageObject.userInput.Enabled))
+            break
+          case AMT.Methods.GET_USER_ACL_ENTRY_EX:
+            resolve(this.amt.AuthorizationService.GetUserAclEntryEx(messageObject.userInput.Handle))
+            break
+          case AMT.Methods.ADD_USER_ACL_ENTRY_EX:
+            console.log(JSON.stringify(messageObject.userInput))
+            resolve(this.amt.AuthorizationService.AddUserAclEntryEx(messageObject.userInput.AccessPermission, messageObject.userInput.Realms, messageObject.userInput.DigestUsername, messageObject.userInput.DigestPassword, messageObject.userInput.KerberosUserSid))
             break
           default:
             throw new Error('unsupported method')
@@ -193,23 +218,21 @@ export class MessageHandler {
         retryCount++
         response = await this.handleRetry(messageObject, response)
         if (retryCount > 2) {
-          response.statusCode = 500
-          messageObject.statusCode = 500
+          response.statusCode = 401
+          messageObject.statusCode = 401
           messageObject.error.push('invalid AMT credentials')
+          break
         }
       }
-      // if (response.statusCode === 200) {
-        messageObject.xmlResponse = parseBody(response)
-        messageObject.statusCode = response.statusCode
-        messageObject.jsonResponse = parseXML(messageObject.xmlResponse)
-        // Logger(LogType.DEBUG, 'MESSAGEHANDER', JSON.stringify(messageObject))
-        if (messageObject.jsonResponse.Envelope.Body.Fault?.Reason?.Text) {{
-          messageObject.error = messageObject.jsonResponse.Envelope.Body.Fault.Reason.Text
-        }}
-        if (messageObject.jsonResponse.Envelope.Body.GetUuid_OUTPUT?.UUID) {
-          messageObject.jsonResponse.Envelope.Body.GetUuid_OUTPUT.UUID = this.convertToGUID(messageObject.jsonResponse.Envelope.Body.GetUuid_OUTPUT.UUID)
-        }
-      // }
+      messageObject.xmlResponse = parseBody(response)
+      messageObject.statusCode = response.statusCode
+      messageObject.jsonResponse = parseXML(messageObject.xmlResponse)
+      if (messageObject.jsonResponse !== null && messageObject.jsonResponse.Envelope?.Body?.Fault?.Reason?.Text) {
+        messageObject.error.push(messageObject.jsonResponse.Envelope.Body.Fault.Reason.Text)
+      }
+      if (messageObject.jsonResponse !== null && messageObject.jsonResponse.Envelope?.Body?.GetUuid_OUTPUT?.UUID) {
+        messageObject.jsonResponse.Envelope.Body.GetUuid_OUTPUT.UUID = this.convertToGUID(messageObject.jsonResponse.Envelope.Body.GetUuid_OUTPUT.UUID)
+      }
       resolve(messageObject)
     })
   }
