@@ -225,7 +225,6 @@ export class MessageHandler {
           messageObject.statusCode = 401
           messageObject.error.push('invalid AMT credentials')
           break
-          break
         }
       }
       messageObject.xmlResponse = parseBody(response)
