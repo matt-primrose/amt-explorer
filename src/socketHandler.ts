@@ -74,7 +74,7 @@ export class SocketHandler {
           } catch (err) {
             resolve(err)
           }
-        }
+        } 
       })
       Logger(LogType.DEBUG, 'SOCKETHANDLER', `WRITING TO SOCKET:\r\n${data}`)
       this.socket.write(data)

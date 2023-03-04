@@ -572,6 +572,48 @@
           values: ['Administrator', 'Redirection', 'Hardware Asset', 'Remote Control', 'Storage', 'Event Manager', 'Agent Presence', 'Circuit Breaker', 'Network Time', 'General Info', 'Endpoint Access Control', 'Audit Log', 'User Access Control'],
           required: ''
         }
+      },
+      RemoveUserAclEntry: {
+        Handle: {
+          name: 'Handle',
+          id: 'handle',
+          type: 'number',
+          required: 'required'
+        }
+      },
+      UpdateUserAclEntryEx: {
+        Handle: {
+          name: 'Handle',
+          id: 'handle',
+          type: 'number',
+          required: 'required'
+        },
+        DigestUsername: {
+          name: 'Digest Username',
+          id: 'digestUsername',
+          type: 'text',
+          required: 'required'
+        },
+        DigestPassword: {
+          name: 'Digest Password',
+          id: 'digestPassword',
+          type: 'password',
+          required: 'required'
+        },
+        AccessPermission: {
+          name: 'Access Permission',
+          id: 'accessPermission',
+          type: 'radio',
+          values: ['Local', 'Network', 'Any'],
+          required: ''
+        },
+        Realms: {
+          name: 'Realms',
+          id: 'realms',
+          type: 'checkbox',
+          values: ['Administrator', 'Redirection', 'Hardware Asset', 'Remote Control', 'Storage', 'Event Manager', 'Agent Presence', 'Circuit Breaker', 'Network Time', 'General Info', 'Endpoint Access Control', 'Audit Log', 'User Access Control'],
+          required: ''
+        }
       }
     },
     AMT_PublicKeyManagementService: {

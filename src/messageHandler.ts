@@ -87,6 +87,7 @@ export class MessageHandler {
     return new Promise(async (resolve, reject) => {
       if (messageObject.api !== null && messageObject.class !== null && messageObject.method !== null) {
         messageObject.classObject = this.setClassObject(messageObject)
+        let password
         switch (messageObject.method) {
           case CIM.Methods.PULL:
             resolve(this.createPullMessage(messageObject))
@@ -129,8 +130,8 @@ export class MessageHandler {
             resolve(this.amt.AlarmClockService.AddAlarm(messageObject.userInput))
             break
           case AMT.Methods.SET_ADMIN_ACL_ENTRY_EX:
-            const digestPassword = this.digestAuth.createDigestCredential('admin', messageObject.userInput.DigestPassword)
-            resolve(this.amt.AuthorizationService.SetAdminACLEntryEx('admin', digestPassword))
+            password = this.digestAuth.createDigestCredential('admin', messageObject.userInput.DigestPassword)
+            resolve(this.amt.AuthorizationService.SetAdminACLEntryEx('admin', password))
             break
           case AMT.Methods.GENERATE_KEY_PAIR:
             resolve(this.amt.PublicKeyManagementService.GenerateKeyPair({ KeyAlgorithm: 0, KeyLength: 2048 }))
@@ -162,8 +163,15 @@ export class MessageHandler {
             resolve(this.amt.AuthorizationService.GetUserAclEntryEx(messageObject.userInput.Handle))
             break
           case AMT.Methods.ADD_USER_ACL_ENTRY_EX:
-            const userPassword = this.digestAuth.createDigestCredential(messageObject.userInput.DigestUsername, messageObject.userInput.DigestPassword)
-            resolve(this.amt.AuthorizationService.AddUserAclEntryEx(messageObject.userInput.AccessPermission, messageObject.userInput.Realms, messageObject.userInput.DigestUsername, userPassword, messageObject.userInput.KerberosUserSid))
+            password = this.digestAuth.createDigestCredential(messageObject.userInput.DigestUsername, messageObject.userInput.DigestPassword)
+            resolve(this.amt.AuthorizationService.AddUserAclEntryEx(messageObject.userInput.AccessPermission, messageObject.userInput.Realms, messageObject.userInput.DigestUsername, password, messageObject.userInput.KerberosUserSid))
+            break
+          case AMT.Methods.REMOVE_USER_ACL_ENTRY:
+            resolve(this.amt.AuthorizationService.RemoveUserAclEntry(messageObject.userInput.Handle))
+            break
+          case AMT.Methods.UPDATE_USER_ACL_ENTRY_EX:
+            password = this.digestAuth.createDigestCredential(messageObject.userInput.DigestUsername, messageObject.userInput.DigestPassword)
+            resolve(this.amt.AuthorizationService.UpdateUserAclEntryEx(messageObject.userInput.Handle, messageObject.userInput.AccessPermission, messageObject.userInput.Realms, messageObject.userInput.DigestUsername, password, messageObject.userInput.KerberosUserSid))
             break
           default:
             throw new Error('unsupported method')
@@ -226,15 +234,6 @@ export class MessageHandler {
           messageObject.error.push('invalid AMT credentials')
           break
         }
-      }
-      messageObject.xmlResponse = parseBody(response)
-      messageObject.statusCode = response.statusCode
-      messageObject.jsonResponse = parseXML(messageObject.xmlResponse)
-      if (messageObject.jsonResponse !== null && messageObject.jsonResponse.Envelope?.Body?.Fault?.Reason?.Text) {
-        messageObject.error.push(messageObject.jsonResponse.Envelope.Body.Fault.Reason.Text)
-      }
-      if (messageObject.jsonResponse !== null && messageObject.jsonResponse.Envelope?.Body?.GetUuid_OUTPUT?.UUID) {
-        messageObject.jsonResponse.Envelope.Body.GetUuid_OUTPUT.UUID = this.convertToGUID(messageObject.jsonResponse.Envelope.Body.GetUuid_OUTPUT.UUID)
       }
       messageObject.xmlResponse = parseBody(response)
       messageObject.statusCode = response.statusCode
