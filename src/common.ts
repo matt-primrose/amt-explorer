@@ -147,7 +147,7 @@ export const ClassMetaData = {
     methods: [IPS.Methods.ENUMERATE, IPS.Methods.GET, IPS.Methods.PULL]
   },
   IPS_IEEE8021xSettings: {
-    methods: [IPS.Methods.ENUMERATE, IPS.Methods.GET, IPS.Methods.PULL, IPS.Methods.PUT]
+    methods: [IPS.Methods.ENUMERATE, IPS.Methods.GET, IPS.Methods.PULL, IPS.Methods.PUT, IPS.Methods.SET_CERTIFICATES]
   },
   IPS_OptInService: {
     methods: [IPS.Methods.CANCEL_OPT_IN, IPS.Methods.ENUMERATE, IPS.Methods.GET, IPS.Methods.PULL, IPS.Methods.PUT, IPS.Methods.START_OPT_IN]

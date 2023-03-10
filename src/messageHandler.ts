@@ -173,6 +173,9 @@ export class MessageHandler {
             password = this.digestAuth.createDigestCredential(messageObject.userInput.DigestUsername, messageObject.userInput.DigestPassword)
             resolve(this.amt.AuthorizationService.UpdateUserAclEntryEx(messageObject.userInput.Handle, messageObject.userInput.AccessPermission, messageObject.userInput.Realms, messageObject.userInput.DigestUsername, password, messageObject.userInput.KerberosUserSid))
             break
+          case IPS.Methods.SET_CERTIFICATES:
+            resolve(this.ips.IEEE8021xSettings.SetCertificates(messageObject.userInput.ServerCertificateIssuer, messageObject.userInput.ClientCertificate))
+            break
           default:
             throw new Error('unsupported method')
         }
