@@ -9,6 +9,7 @@ import { Logger, LogType, parseBody, parseXML } from './common'
 import { DigestAuth } from './digestAuth'
 import { SocketHandler } from './socketHandler'
 import { HttpZResponseModel } from 'http-z'
+import { Selector } from '@open-amt-cloud-toolkit/wsman-messages/WSMan'
 
 // Object holder for MessageHandler class.  Holds all of the relevant information for the life cycle of a message
 export class MessageObject {
@@ -101,6 +102,13 @@ export class MessageHandler {
           case CIM.Methods.ENUMERATE:
             resolve(messageObject.classObject[messageObject.api].Enumerate())
             break
+          case CIM.Methods.DELETE:
+            const selector: Selector = {
+              name: 'InstanceID',
+              value: messageObject.userInput.Selector
+            }
+            resolve(messageObject.classObject[messageObject.api].Delete(messageObject.classObject[messageObject.class], selector))
+            break
           case AMT.Methods.READ_RECORDS:
             resolve(this.amt.AuditLog.ReadRecords())
             break
@@ -118,12 +126,6 @@ export class MessageHandler {
             break
           case AMT.Methods.GET_LOW_ACCURACY_TIME_SYNCH:
             resolve(this.amt.TimeSynchronizationService.GetLowAccuracyTimeSynch())
-            break
-          case IPS.Methods.START_OPT_IN:
-            resolve(this.ips.OptInService.StartOptIn())
-            break
-          case IPS.Methods.CANCEL_OPT_IN:
-            resolve(this.ips.OptInService.CancelOptIn())
             break
           case AMT.Methods.ADD_ALARM:
             messageObject.userInput.StartTime = new Date(messageObject.userInput.StartTime)
@@ -172,6 +174,12 @@ export class MessageHandler {
           case AMT.Methods.UPDATE_USER_ACL_ENTRY_EX:
             password = this.digestAuth.createDigestCredential(messageObject.userInput.DigestUsername, messageObject.userInput.DigestPassword)
             resolve(this.amt.AuthorizationService.UpdateUserAclEntryEx(messageObject.userInput.Handle, messageObject.userInput.AccessPermission, messageObject.userInput.Realms, messageObject.userInput.DigestUsername, password, messageObject.userInput.KerberosUserSid))
+            break
+          case IPS.Methods.START_OPT_IN:
+            resolve(this.ips.OptInService.StartOptIn())
+            break
+          case IPS.Methods.CANCEL_OPT_IN:
+            resolve(this.ips.OptInService.CancelOptIn())
             break
           case IPS.Methods.SET_CERTIFICATES:
             resolve(this.ips.IEEE8021xSettings.SetCertificates(messageObject.userInput.ServerCertificateIssuer, messageObject.userInput.ClientCertificate))

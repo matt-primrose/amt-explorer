@@ -616,6 +616,16 @@
         }
       }
     },
+    AMT_PublicKeyCertificate: {
+      Delete: {
+        Selector: {
+          name: 'InstanceID',
+          id: 'instanceId',
+          type: 'text',
+          required: 'required'
+        }
+      }
+    },
     AMT_PublicKeyManagementService: {
       AddCertificate: {
         Certificate: {
