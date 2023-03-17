@@ -48,7 +48,7 @@ export const ClassMetaData = {
     methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL, AMT.Methods.DELETE]
   },
   AMT_PublicKeyManagementService: {
-    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL, AMT.Methods.GENERATE_KEY_PAIR, AMT.Methods.ADD_CERTIFICATE]
+    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL, AMT.Methods.GENERATE_KEY_PAIR, AMT.Methods.ADD_CERTIFICATE, AMT.Methods.ADD_TRUSTED_ROOT_CERTIFICATE]
   },
   AMT_PublicPrivateKeyPair: {
     methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL]

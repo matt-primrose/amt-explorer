@@ -88,7 +88,7 @@ export class MessageHandler {
     return new Promise(async (resolve, reject) => {
       if (messageObject.api !== null && messageObject.class !== null && messageObject.method !== null) {
         messageObject.classObject = this.setClassObject(messageObject)
-        let password
+        let password, certBlob: AMT.Models.AddCertificate
         switch (messageObject.method) {
           case CIM.Methods.PULL:
             resolve(this.createPullMessage(messageObject))
@@ -140,8 +140,12 @@ export class MessageHandler {
             resolve(this.amt.PublicKeyManagementService.GenerateKeyPair({ KeyAlgorithm: 0, KeyLength: 2048 }))
             break
           case AMT.Methods.ADD_CERTIFICATE:
-            const certBlob: AMT.Models.AddCertificate = { CertificateBlob: messageObject.userInput.Certificate }
+            certBlob = { CertificateBlob: messageObject.userInput.Certificate }
             resolve(this.amt.PublicKeyManagementService.AddCertificate(certBlob))
+            break
+          case AMT.Methods.ADD_TRUSTED_ROOT_CERTIFICATE:
+            certBlob = { CertificateBlob: messageObject.userInput.Certificate }
+            resolve(this.amt.PublicKeyManagementService.AddTrustedRootCertificate(certBlob))
             break
           case AMT.Methods.ENUMERATE_USER_ACL_ENTRIES:
             resolve(this.amt.AuthorizationService.EnumerateUserAclEntries(messageObject.userInput.StartIndex))
