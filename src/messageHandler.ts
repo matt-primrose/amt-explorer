@@ -4,7 +4,7 @@
 **********************************************************************/
 
 import { AMT, IPS, CIM } from '@open-amt-cloud-toolkit/wsman-messages'
-import { Methods } from '@open-amt-cloud-toolkit/wsman-messages/amt'
+import { Methods, Models } from '@open-amt-cloud-toolkit/wsman-messages/amt'
 import { Logger, LogType, parseBody, parseXML } from './common'
 import { DigestAuth } from './digestAuth'
 import { SocketHandler } from './socketHandler'
@@ -103,9 +103,12 @@ export class MessageHandler {
             resolve(messageObject.classObject[messageObject.api].Enumerate())
             break
           case CIM.Methods.DELETE:
-            const selector: Selector = {
-              name: 'InstanceID',
-              value: messageObject.userInput.Selector
+            let selector:  Selector = null
+            if (messageObject.userInput?.Selector) {
+              selector = {
+                name: 'InstanceID',
+                value: messageObject.userInput.Selector
+              }
             }
             resolve(messageObject.classObject[messageObject.api].Delete(messageObject.classObject[messageObject.class], selector))
             break
@@ -178,6 +181,24 @@ export class MessageHandler {
           case AMT.Methods.UPDATE_USER_ACL_ENTRY_EX:
             password = this.digestAuth.createDigestCredential(messageObject.userInput.DigestUsername, messageObject.userInput.DigestPassword)
             resolve(this.amt.AuthorizationService.UpdateUserAclEntryEx(messageObject.userInput.Handle, messageObject.userInput.AccessPermission, messageObject.userInput.Realms, messageObject.userInput.DigestUsername, password, messageObject.userInput.KerberosUserSid))
+            break
+          case AMT.Methods.ADD_MPS:
+            let commonName: string = ''
+            if (messageObject.userInput.CommonName != '') {
+              commonName = messageObject.userInput.CommonName as string
+            } else {
+              commonName = messageObject.userInput.AccessInfo as string
+            }
+            const mpServer: Models.MPServer = {
+              AccessInfo: messageObject.userInput.AccessInfo,
+              AuthMethod: 2,
+              CommonName: commonName,
+              InfoFormat: messageObject.userInput.InfoFormat,
+              Password: messageObject.userInput.Password,
+              Port: messageObject.userInput.Port,
+              Username: messageObject.userInput.Username
+            }
+            resolve(this.amt.RemoteAccessService.AddMPS(mpServer))
             break
           case IPS.Methods.START_OPT_IN:
             resolve(this.ips.OptInService.StartOptIn())

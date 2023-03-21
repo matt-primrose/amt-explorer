@@ -110,7 +110,15 @@ app.route('/submit').post(async (req, res) => {
     const response: MessageObject = await messageHandler.sendMessage(messageObject)
     const httpResponse = new HttpResponse()
     httpResponse.xmlBody = response.xmlResponse
-    httpResponse.jsonBody = response.jsonResponse
+    if (response.xmlResponse.includes('DeleteResponse')) {
+      if (response.jsonResponse.Envelope.Body == '') {
+        httpResponse.jsonBody = { Envelope: { Body: 'Success' } }
+      } else {
+        httpResponse.jsonBody = response.jsonResponse
+      }
+    } else {
+      httpResponse.jsonBody = response.jsonResponse
+    }
     httpResponse.error = response.error
     httpResponse.statusCode = response.statusCode
     Logger(LogType.INFO, 'INDEX', JSON.stringify(httpResponse))

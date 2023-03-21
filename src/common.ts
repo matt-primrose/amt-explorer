@@ -39,7 +39,7 @@ export const ClassMetaData = {
     methods: [AMT.Methods.GET, AMT.Methods.ENUMERATE, AMT.Methods.PULL, AMT.Methods.PUT]
   },
   AMT_ManagementPresenceRemoteSAP: {
-    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL]
+    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL, AMT.Methods.DELETE]
   },
   AMT_MessageLog: {
     methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.GET_RECORDS, AMT.Methods.POSITION_TO_FIRST_RECORD, AMT.Methods.PULL]
@@ -63,7 +63,7 @@ export const ClassMetaData = {
     methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL]
   },
   AMT_RemoteAccessService: {
-    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL]
+    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL, AMT.Methods.ADD_MPS]
   },
   AMT_SetupAndConfigurationService: {
     methods: [AMT.Methods.COMMIT_CHANGES, AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.GET_UUID, AMT.Methods.PULL]

@@ -246,6 +246,7 @@
       case 'default':
         clearXMLTransmit()
         return
+      case 'Delete':
       case 'Get':
       case 'Put':
       case 'Pull':
@@ -362,6 +363,11 @@
       Network: 1,
       Any: 2
     },
+    infoFormat: {
+      IPv4: 3,
+      IPv6: 4,
+      FQDN: 201
+    }
   }
   const checkboxEnums = {
     realms: {
@@ -614,14 +620,45 @@
           values: ['Administrator', 'Redirection', 'Hardware Asset', 'Remote Control', 'Storage', 'Event Manager', 'Agent Presence', 'Circuit Breaker', 'Network Time', 'General Info', 'Endpoint Access Control', 'Audit Log', 'User Access Control'],
           required: ''
         }
-      }
+      },
     },
-    AMT_PublicKeyCertificate: {
-      Delete: {
-        Selector: {
-          name: 'InstanceID',
-          id: 'instanceId',
+    AMT_RemoteAccessService: {
+      AddMpServer: {
+        InfoFormat: {
+          name: 'Info Format',
+          id: 'infoFormat',
+          type: 'radio',
+          values: ['IPv4', 'IPv6', 'FQDN'],
+          required: ''
+        },
+        AccessInfo: {
+          name: 'Access Info',
+          id: 'accessInfo',
           type: 'text',
+          required: 'required'
+        },
+        CommonName: {
+          name: 'Common Name (if Access Info is IP address)',
+          id: 'commonName',
+          type: 'text',
+          required: ''
+        },
+        Port: {
+          name: 'Port',
+          id: 'port',
+          type: 'number',
+          required: 'required'
+        },
+        Username: {
+          name: 'Username',
+          id: 'username',
+          type: 'text',
+          required: 'required'
+        },
+        Password: {
+          name: 'Password',
+          id: 'password',
+          type: 'password',
           required: 'required'
         }
       }
