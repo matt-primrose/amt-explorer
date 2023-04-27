@@ -63,7 +63,7 @@ export const ClassMetaData = {
     methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL]
   },
   AMT_RemoteAccessService: {
-    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL, AMT.Methods.ADD_MPS]
+    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL, AMT.Methods.ADD_MPS, AMT.Methods.ADD_REMOTE_ACCESS_POLICY_RULE]
   },
   AMT_SetupAndConfigurationService: {
     methods: [AMT.Methods.COMMIT_CHANGES, AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.GET_UUID, AMT.Methods.PULL]
@@ -232,4 +232,41 @@ export const Logger = (type: LogType, module: string, msg: string): void => {
     default:
       return
   }
+}
+
+export enum PeriodicType {
+  Interval = 0,
+  Daily = 1
+}
+
+export enum Trigger {
+  UserInitiated = 0,
+  Alert = 1,
+  Periodic = 2,
+  HomeProvisioning = 3
+}
+
+export const generateExtendedDataBase64 = (periodicType?: 0 | 1, timePeriodSeconds?: number, hourOfDay?: number, minuteOfHour?: number): string => {
+  let extendedData;
+
+  if (periodicType === PeriodicType.Interval) {
+    // For periodic type 0, encode the time period in seconds as a uint32 value
+    const buffer = Buffer.alloc(4);
+    buffer.writeUInt32BE(timePeriodSeconds);
+    extendedData = buffer;
+  } else if (periodicType === PeriodicType.Daily) {
+    // For periodic type 1, encode the hour of day and minute of hour as two uint32 values
+    const buffer = Buffer.alloc(8);
+    buffer.writeUInt32BE(hourOfDay, 0);
+    buffer.writeUInt32BE(minuteOfHour, 4);
+    extendedData = buffer;
+  } else {
+    // For other trigger types, the extended data should be a byte sequence of length zero
+    extendedData = Buffer.alloc(0);
+  }
+
+  // Encode the extended data as a base64 string
+  const base64 = extendedData.toString('base64')
+
+  return base64;
 }

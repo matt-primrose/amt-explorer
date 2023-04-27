@@ -349,12 +349,24 @@
         for (let x = 0; x < inputObject[item].values.length; x++) {
           htmlContent += `<p><label for="${inputObject[item].values[x]}">${inputObject[item].values[x]}</label><input type="${inputObject[item].type}" name="${inputObject[item].id}" value="${inputObject[item].values[x]}" ></p>`
         }
+      } else if (inputObject[item].type === 'dropdown') {
+        htmlContent += `<p><label for="${inputObject[item].id}">${inputObject[item].name}<select id="${inputObject[item].id}" onchange="onDropDownChange(this)">`
+        htmlContent += `<option value="default">Select Item</option>`
+        const curItem = inputObject[item]
+        for (let item in curItem.values) {
+          htmlContent += `<option value="${curItem.values[item]}">${curItem.values[item]}</option>`
+        }
+        htmlContent += '</select>'
       } else {
         htmlContent += `<p><label for="${inputObject[item].id}">${inputObject[item].name}:</label><input type="${inputObject[item].type}" id="${inputObject[item].id}" value="" ${inputObject[item].required}></p>`
       }
     }
     htmlContent += '</div>'
     return htmlContent
+  }
+
+  function onDropDownChange(e) {
+    // Handle drop down change
   }
 
   const radioEnums = {
@@ -422,6 +434,9 @@
       else if (itemObj.type === 'radio') {
         const radioButtons = Array.from(document.getElementsByName(itemObj.id))
         radioButtons.forEach(e => { if (e.checked) { userInput[item] = radioEnums[itemObj.id][e.value] } })
+      }
+      else if (itemObj.type === 'dropdown') {
+        userInput[item] = document.getElementById(itemObj.id).value
       }
       else {
         const elementItem = document.getElementById(itemObj.id)
@@ -622,12 +637,30 @@
         }
       },
     },
+    AMT_PublicKeyManagementService: {
+      AddCertificate: {
+        Certificate: {
+          name: 'Certificate',
+          id: 'certificate',
+          type: 'file',
+          required: 'required'
+        }
+      },
+      AddTrustedRootCertificate: {
+        Certificate: {
+          name: 'Trusted Root Certificate',
+          id: 'certificate',
+          type: 'file',
+          required: 'required'
+        }
+      }
+    },
     AMT_RemoteAccessService: {
       AddMpServer: {
         InfoFormat: {
           name: 'Info Format',
           id: 'infoFormat',
-          type: 'radio',
+          type: 'dropdown',
           values: ['IPv4', 'IPv6', 'FQDN'],
           required: ''
         },
@@ -661,22 +694,58 @@
           type: 'password',
           required: 'required'
         }
-      }
-    },
-    AMT_PublicKeyManagementService: {
-      AddCertificate: {
-        Certificate: {
-          name: 'Certificate',
-          id: 'certificate',
-          type: 'file',
-          required: 'required'
-        }
       },
-      AddTrustedRootCertificate: {
-        Certificate: {
-          name: 'Trusted Root Certificate',
-          id: 'certificate',
-          type: 'file',
+      AddRemoteAccessPolicyRule: {
+        Trigger: {
+          name: 'Trigger',
+          id: 'trigger',
+          type: 'dropdown',
+          values: ['User Initiated', 'Alert', 'Periodic', 'Home Provisioning'],
+          required: 'required'
+        },
+        TunnelLifeTime: {
+          name: 'Tunnel Life Time',
+          id: 'tunnelLifeTime',
+          type: 'number',
+          required: 'required'
+        },
+        PeriodicType: {
+          parent: 'Trigger',
+          parentValue: 'Periodic',
+          name: 'Periodic Type',
+          id: 'periodicType',
+          type: 'dropdown',
+          values: ['Interval', 'Daily'],
+          required: 'required'
+        },
+        TimePeriodSeconds: {
+          parent: 'PeriodicType',
+          parentValue: 'Interval',
+          name: 'Time Period in Seconds',
+          id: 'timePeriodSeconds',
+          type: 'number',
+          required: 'required'
+        },
+        HourOfDay: {
+          parent: 'PeriodicType',
+          parentValue: 'Daily',
+          name: 'Hour Of Day',
+          id: 'hourOfDay',
+          type: 'number',
+          required: 'required'
+        },
+        MinuteOfHour: {
+          parent: 'PeriodicType',
+          parentValue: 'Daily',
+          name: 'Minute of Hour',
+          id: 'minuteOfHour',
+          type: 'number',
+          required: 'required'
+        },
+        MPSName: {
+          name: 'MPS Name',
+          id: 'mpsName',
+          type: 'text',
           required: 'required'
         }
       }

@@ -4,8 +4,8 @@
 **********************************************************************/
 
 import { AMT, IPS, CIM } from '@open-amt-cloud-toolkit/wsman-messages'
-import { Methods, Models } from '@open-amt-cloud-toolkit/wsman-messages/amt'
-import { Logger, LogType, parseBody, parseXML } from './common'
+import { Methods, Models, Types } from '@open-amt-cloud-toolkit/wsman-messages/amt'
+import { Logger, LogType, parseBody, parseXML, generateExtendedDataBase64 } from './common'
 import { DigestAuth } from './digestAuth'
 import { SocketHandler } from './socketHandler'
 import { HttpZResponseModel } from 'http-z'
@@ -88,7 +88,7 @@ export class MessageHandler {
     return new Promise(async (resolve, reject) => {
       if (messageObject.api !== null && messageObject.class !== null && messageObject.method !== null) {
         messageObject.classObject = this.setClassObject(messageObject)
-        let password, certBlob: AMT.Models.AddCertificate
+        let password, certBlob: AMT.Models.AddCertificate, selector: Selector
         switch (messageObject.method) {
           case CIM.Methods.PULL:
             resolve(this.createPullMessage(messageObject))
@@ -103,7 +103,7 @@ export class MessageHandler {
             resolve(messageObject.classObject[messageObject.api].Enumerate())
             break
           case CIM.Methods.DELETE:
-            let selector:  Selector = null
+            selector = null
             if (messageObject.userInput?.Selector) {
               selector = {
                 name: 'InstanceID',
@@ -184,6 +184,10 @@ export class MessageHandler {
             break
           case AMT.Methods.ADD_MPS:
             let commonName: string = ''
+            let infoFormatValue: Types.MPServer.InfoFormat
+            if (messageObject.userInput.InfoFormat === 'IPv4') infoFormatValue = 3
+            if (messageObject.userInput.InfoFormat === 'IPv6') infoFormatValue = 4
+            if (messageObject.userInput.InfoFormat === 'FQDN') infoFormatValue = 201
             if (messageObject.userInput.CommonName != '') {
               commonName = messageObject.userInput.CommonName as string
             } else {
@@ -193,12 +197,30 @@ export class MessageHandler {
               AccessInfo: messageObject.userInput.AccessInfo,
               AuthMethod: 2,
               CommonName: commonName,
-              InfoFormat: messageObject.userInput.InfoFormat,
+              InfoFormat: infoFormatValue,
               Password: messageObject.userInput.Password,
               Port: messageObject.userInput.Port,
               Username: messageObject.userInput.Username
             }
             resolve(this.amt.RemoteAccessService.AddMPS(mpServer))
+            break
+          case AMT.Methods.ADD_REMOTE_ACCESS_POLICY_RULE:
+            let periodicType: 0 | 1
+            if (messageObject.userInput.PeriodicType === 'Interval') periodicType = 0
+            if (messageObject.userInput.PeriodicType === 'Daily') periodicType = 1
+            const remoteAccessPolicyRule: Models.RemoteAccessPolicyRule = {
+              ExtendedData: generateExtendedDataBase64(periodicType, messageObject.userInput.TimePeriodSeconds, messageObject.userInput.HourOfDay, messageObject.userInput.MinuteOfHour),
+              Trigger: messageObject.userInput.Trigger,
+              TunnelLifeTime: messageObject.userInput.TunnelLifeTime
+            }
+            selector = null
+            if (messageObject.userInput?.MPSName) {
+              selector = {
+                name: 'InstanceID',
+                value: messageObject.userInput.MPSName
+              }
+            }
+            resolve(this.amt.RemoteAccessService.AddRemoteAccessPolicyRule(remoteAccessPolicyRule, selector))
             break
           case IPS.Methods.START_OPT_IN:
             resolve(this.ips.OptInService.StartOptIn())
