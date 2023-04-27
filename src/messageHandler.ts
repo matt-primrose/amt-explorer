@@ -206,17 +206,22 @@ export class MessageHandler {
             break
           case AMT.Methods.ADD_REMOTE_ACCESS_POLICY_RULE:
             let periodicType: 0 | 1
+            let triggerType: 0 | 1 | 2 | 3
             if (messageObject.userInput.PeriodicType === 'Interval') periodicType = 0
             if (messageObject.userInput.PeriodicType === 'Daily') periodicType = 1
+            if (messageObject.userInput.Trigger === 'User Initiated') triggerType = 0
+            if (messageObject.userInput.Trigger === 'Alert') triggerType = 1
+            if (messageObject.userInput.Trigger === 'Periodic') triggerType = 2
+            if (messageObject.userInput.Trigger === 'Home Provisioning') triggerType = 3
             const remoteAccessPolicyRule: Models.RemoteAccessPolicyRule = {
               ExtendedData: generateExtendedDataBase64(periodicType, messageObject.userInput.TimePeriodSeconds, messageObject.userInput.HourOfDay, messageObject.userInput.MinuteOfHour),
-              Trigger: messageObject.userInput.Trigger,
+              Trigger: triggerType,
               TunnelLifeTime: messageObject.userInput.TunnelLifeTime
             }
             selector = null
             if (messageObject.userInput?.MPSName) {
               selector = {
-                name: 'InstanceID',
+                name: 'Name',
                 value: messageObject.userInput.MPSName
               }
             }

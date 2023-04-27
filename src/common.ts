@@ -60,7 +60,7 @@ export const ClassMetaData = {
     methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL, AMT.Methods.PUT]
   },
   AMT_RemoteAccessPolicyRule: {
-    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL]
+    methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL, AMT.Methods.DELETE]
   },
   AMT_RemoteAccessService: {
     methods: [AMT.Methods.ENUMERATE, AMT.Methods.GET, AMT.Methods.PULL, AMT.Methods.ADD_MPS, AMT.Methods.ADD_REMOTE_ACCESS_POLICY_RULE]
@@ -250,9 +250,9 @@ export const generateExtendedDataBase64 = (periodicType?: 0 | 1, timePeriodSecon
   let extendedData;
 
   if (periodicType === PeriodicType.Interval) {
-    // For periodic type 0, encode the time period in seconds as a uint32 value
-    const buffer = Buffer.alloc(4);
-    buffer.writeUInt32BE(timePeriodSeconds);
+    // For periodic type 0, encode the time period in seconds as a uint64 value
+    const buffer = Buffer.alloc(8);
+    buffer.writeBigUInt64BE(BigInt(timePeriodSeconds));
     extendedData = buffer;
   } else if (periodicType === PeriodicType.Daily) {
     // For periodic type 1, encode the hour of day and minute of hour as two uint32 values
@@ -270,3 +270,4 @@ export const generateExtendedDataBase64 = (periodicType?: 0 | 1, timePeriodSecon
 
   return base64;
 }
+
