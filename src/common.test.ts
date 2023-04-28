@@ -1,4 +1,4 @@
-import { myParseNumbers, parseBody, parseXML, LogType, Logger } from './common'
+import { myParseNumbers, parseBody, parseXML, LogType, Logger, generateExtendedDataBase64, PeriodicType } from './common'
 import { processors } from 'xml2js'
 
 describe('common', () => {
@@ -138,6 +138,25 @@ describe('common', () => {
       expect(consoleDebugSpy).not.toHaveBeenCalled()
       expect(consoleInfoSpy).not.toHaveBeenCalled()
       expect(consoleWarnSpy).not.toHaveBeenCalled()
+    })
+  })
+  describe('generateExtendedDataBase64', () => {
+    test('generates extended data correctly for periodic type 0', () => {
+      const expectedValue = 'AAAAAAAAAAo='
+      const result = generateExtendedDataBase64(PeriodicType.Interval, 10)
+      expect(result).toEqual(expectedValue)
+    })
+    
+    test('generates extended data correctly for periodic type 1', () => {
+      const expectedValue = 'AAAABQAAAB4='
+      const result = generateExtendedDataBase64(PeriodicType.Daily, undefined, 5, 30)
+      expect(result).toEqual(expectedValue)
+    })
+    
+    test('generates empty extended data for other trigger types', () => {
+      const expectedValue = ''
+      const result = generateExtendedDataBase64()
+      expect(result).toEqual(expectedValue)
     })
   })
 })
