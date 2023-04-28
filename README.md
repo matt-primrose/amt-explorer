@@ -26,6 +26,6 @@ Fill out Host, Username, and Password for the AMT device to connect to; click co
 
 Select an API Call and Method from the drop down lists.  XML Transmit will populate with the XML formatted WSMAN call to send to AMT
 
-Clicking Submit will send the call to the AMT device and the XML formatted WSMAN response from AMT will show up in XML Received.  A JSON formatted response will be presented in JSON Received
+Clicking Submit will send the call to the AMT device and the XML formatted WSMAN response from AMT will show up in XML Received.  A JSON formatted response will be presented in JSON Received.
 
 NOTE: AMT Explorer currently doesn't support TLS, so the only valid port is 16992.
