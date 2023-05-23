@@ -1,5 +1,6 @@
 ![codecov.io](https://codecov.io/github/matt-primrose/amt-explorer/coverage.svg?branch=main)
 # AMT Explorer
+This tool utilizes [wsman-messages](https://github.com/open-amt-cloud-toolkit/wsman-messages) to create and send messages to an Intel&reg; AMT device and see the response back from the device
 
 ## Installation
 ```bash
