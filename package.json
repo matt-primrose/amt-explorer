@@ -27,7 +27,7 @@
     "@types/express": "^4.17.17",
     "@types/express-brute": "^1.0.2",
     "@types/jest": "^29.5.3",
-    "@types/node": "^20.4.9",
+    "@types/node": "^20.4.10",
     "@types/ws": "^8.5.5",
     "jest": "^29.6.2",
     "jest-junit": "^16.0.0",
